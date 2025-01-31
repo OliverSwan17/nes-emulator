@@ -9,7 +9,6 @@ typedef uint8_t byte;
 typedef uint8_t u8;
 typedef uint16_t u16;
 
-// Based on https://www.nesdev.org/wiki/CPU_registers and https://www.nesdev.org/wiki/Status_flags
 typedef struct Registers {
     u8 A;  // Accumulator
     u8 X;  // Index
@@ -67,8 +66,24 @@ typedef struct Instruction {
         
     } operand;
     
+    // Meta data
+    char mnemonic[4];
+    AddressingMode addressingMode;
+    u8 cycles;
+    u8 bytes;
+} Instruction;
+
+typedef struct InstructionMetaData {
     char mnemonic[4];
     AddressingMode adressingMode;
+    u8 bytes;
     u8 cycles;
-    u8 operandLength;
-} Instruction;
+} InstructionMetaData;
+
+void initInstructionMetaData();
+Instruction identifyInstruction(u8 *binary);
+void executeInstruction(Instruction instruction);
+
+void DEX();
+void NOP();
+void JSR();
