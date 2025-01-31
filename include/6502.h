@@ -1,5 +1,13 @@
 #pragma once
-#include "defs.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+typedef uint8_t byte;
+typedef uint8_t u8;
+typedef uint16_t u16;
 
 // Based on https://www.nesdev.org/wiki/CPU_registers and https://www.nesdev.org/wiki/Status_flags
 typedef struct Registers {
@@ -11,16 +19,16 @@ typedef struct Registers {
     
     // Status Register (SR)
     union {
-        u8 SR; // The whole Status Register byte
+        u8 byte;
         struct {
-            u8 Carry : 1;            // 0
-            u8 Zero : 1;             // 1
-            u8 InterruptDisable : 1; // 2
-            u8 Decimal : 1;          // 3
-            u8 Break : 1;            // 4
-            u8 Ignored : 1;          // 5
-            u8 Overflow : 1;         // 6
-            u8 Negative : 1;         // 7
+            u8 C : 1; // Carry
+            u8 Z : 1; // Zero
+            u8 I : 1; // Interrupt
+            u8 D : 1; // Decimal
+            u8 B : 1; // Break
+            u8 R : 1; // Ignored
+            u8 V : 1; // Overflow
+            u8 N : 1; // Negative
         };
     } SR;
 } Registers;
@@ -41,18 +49,26 @@ typedef enum {
     ZEROPAGE_Y,
 } AddressingMode;
 
-typedef enum {
-    ADC, AND, ASL, BCC,	BCS, BEQ, BIT, BMI,	BNE, BPL, BRK, BVC,	BVS, CLC,
-    CLD, CLI, CLV, CMP,	CPX, CPY, DEC, DEX,	DEY, EOR, INC, INX,	INY, JMP,
-    JSR, LDA, LDX, LDY,	LSR, NOP, ORA, PHA,	PHP, PLA, PLP, ROL,	ROR, RTI,
-    RTS, SBC, SEC, SED,	SEI, STA, STX, STY,	TAX, TAY, TSX, TXA,	TXS, TYA,
-} Mnemonic;
-
 typedef struct Instruction {
-    u8 opcode;
-    u16 operand;
+    union {
+        u8 byte;
+        struct {
+            u8 lowNibble  : 4;
+            u8 highNibble : 4;
+        };
+    } opcode;
 
-    enum mnemonic;
+    union {
+        u16 bytes;
+        struct {
+            u8 lowByte;
+            u8 highByte;
+        };
+        
+    } operand;
+    
+    char mnemonic[4];
     AddressingMode adressingMode;
     u8 cycles;
+    u8 operandLength;
 } Instruction;
