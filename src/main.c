@@ -1,10 +1,12 @@
-#include "common.h"
-#include "defs.h"
+#include "main.h"
 
 int main() {
-    printf("Hello World!\n");
-    u8 var = 10;
-    printf("%hhu\n", var);
-    
+    Registers regs;
+
+    // Dummy values for testing
+    regs.A = 17;
+    regs.SR.Carry = 1;
+    displayRegisters(regs);
+
     return 0;
 }
