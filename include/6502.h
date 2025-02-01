@@ -80,10 +80,22 @@ typedef struct InstructionMetaData {
     u8 cycles;
 } InstructionMetaData;
 
+typedef struct Memory {
+    u8 ram[2048];
+    u8 program[256];
+} Memory;
+
+// Functions
 void initInstructionMetaData();
 Instruction identifyInstruction(u8 *binary);
 void executeInstruction(Instruction instruction);
+void powerUp();
 
+// Opcodes
 void DEX();
 void NOP();
 void JSR();
+
+// Utils
+void displayRegisters(Registers regs);
+void printInstruction(Instruction Instruction);
