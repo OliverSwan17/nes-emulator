@@ -10,7 +10,7 @@ void powerUp() {
     regs.X = 0;
     regs.Y = 0;
     regs.PC = sizeof(Memory) - sizeof(memory.program); // Will change for NES
-    regs.SP = 0xFD;
+    regs.SP = 0xFF;
     regs.SR.C = 0;
     regs.SR.Z = 0;
     regs.SR.I = 1;
@@ -22,25 +22,44 @@ void powerUp() {
 
     displayRegisters(regs);
 
-    u8 code[] = {0xCA, 0xEA, 0xEA, 0x20, 0xCB, 0xAB};
+    //u8 code[] = {0xCA, 0xEA, 0xEA, 0x20, 0xCB, 0xAB, 0xE8, 0x88};
+    u8 code[] = {0x20, 0x04, 0x08, 0xEA, 0xCA, 0xF8}; // Jumps to the DEX instruction
     memcpy(memory.program, code, sizeof(code));
 
-    int remainingInstructions = 4;
+    int remainingInstructions = 3;
     Instruction instruction;
     while (remainingInstructions) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC);
         printInstruction(instruction);
         executeInstruction(instruction);
-        regs.PC += instruction.bytes;
+
+        if (strcmp(instruction.mnemonic, "JSR") != 0) // Add other branch and jumps in the future
+            regs.PC += instruction.bytes;
+
         displayRegisters(regs);
         remainingInstructions--;
     }
 }
 
+// Mnemonic, Addressing Mode, Bytes, Cycles
 void initInstructionMetaData() {
+    // Decrements and Increments
+    imdLookup[0xE8] = (InstructionMetaData){"INX", IMPLIED, 1, 2};
+    imdLookup[0xC8] = (InstructionMetaData){"INY", IMPLIED, 1, 2};
     imdLookup[0xCA] = (InstructionMetaData){"DEX", IMPLIED, 1, 2};
+    imdLookup[0x88] = (InstructionMetaData){"DEY", IMPLIED, 1, 2};
+
     imdLookup[0xEA] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
     imdLookup[0x20] = (InstructionMetaData){"JSR", ABSOLUTE, 3, 6};
+
+    imdLookup[0x18] = (InstructionMetaData){"CLC", IMPLIED, 1, 2};
+    imdLookup[0xD8] = (InstructionMetaData){"CLD", IMPLIED, 1, 2};
+    imdLookup[0x58] = (InstructionMetaData){"CLI", IMPLIED, 1, 2};
+    imdLookup[0xB8] = (InstructionMetaData){"CLV", IMPLIED, 1, 2};
+
+    imdLookup[0x38] = (InstructionMetaData){"SEC", IMPLIED, 1, 2};
+    imdLookup[0xF8] = (InstructionMetaData){"SED", IMPLIED, 1, 2};
+    imdLookup[0x78] = (InstructionMetaData){"SEI", IMPLIED, 1, 2};
 }
 
 Instruction identifyInstruction(u8 *binary) {
@@ -62,46 +81,115 @@ Instruction identifyInstruction(u8 *binary) {
     return instruction;
 }
 
+void INX() {
+    regs.X += 1;
+}
+
+void INY() {
+    regs.Y += 1;
+}
+
 void DEX() {
     regs.X -= 1;
+}
+
+void DEY() {
+    regs.Y -= 1;
 }
 
 void NOP() {
     return;
 }
 
-void JSR() {
-    // Push PC + 2 to the stack
-    // PC = Memory address in  
+void JSR(Instruction instruction) {
+    memory.ram[regs.SP + 0x100] = regs.PC + 2; // Pushing PC + 2 to the stack
+    regs.PC = instruction.operand.bytes; // Setting the PC
+    regs.SP -= 1;
 }
 
+
+void CLC(){
+    regs.SR.C = 0;
+}
+
+void CLD(){
+    regs.SR.D = 0;
+}
+
+void CLI(){
+    regs.SR.I = 0;
+}
+
+void CLV(){
+    regs.SR.V = 0;    
+}
+
+void SEC(){
+    regs.SR.C = 1;
+}
+
+void SED(){
+    regs.SR.D = 1;
+    printf("Nigger!!!!!!!!!!!!!!!!!!!!!");
+}
+
+void SEI(){
+    regs.SR.I = 1;
+}
+
+
 void executeInstruction(Instruction instruction) {
+    if (strcmp(instruction.mnemonic, "INX") == 0)
+        INX();
+    if (strcmp(instruction.mnemonic, "INY") == 0)
+        INY();
     if (strcmp(instruction.mnemonic, "DEX") == 0)
         DEX();
+    if (strcmp(instruction.mnemonic, "DEY") == 0)
+        DEY();
     if (strcmp(instruction.mnemonic, "NOP") == 0)
         NOP();
     if (strcmp(instruction.mnemonic, "JSR") == 0)
-        JSR();
+        JSR(instruction);
+
+    if (strcmp(instruction.mnemonic, "CLC") == 0)
+        CLC();
+    if (strcmp(instruction.mnemonic, "CLD") == 0)
+        CLD();
+    if (strcmp(instruction.mnemonic, "CLI") == 0)
+        CLI();
+    if (strcmp(instruction.mnemonic, "CLV") == 0)
+        CLV();
+
+    if (strcmp(instruction.mnemonic, "SEC") == 0)
+        SEC();
+    if (strcmp(instruction.mnemonic, "SED") == 0)
+        SED();
+    if (strcmp(instruction.mnemonic, "SEI") == 0)
+        SEI();
 }
 
 void displayRegisters(Registers regs) {
     printf("------------------------------------------------\n");
-    printf("A: %u\n", regs.A);
-    printf("X: %u\n", regs.X);
-    printf("Y: %u\n", regs.Y);
-    printf("SP: %u\n", regs.SP);
-    printf("PC: %u\n", regs.PC);
-    printf("SR: %u\n\n", regs.SR.byte);
+    printf("A: 0x%02X\n", regs.A);
+    printf("X: 0x%02X\n", regs.X);
+    printf("Y: 0x%02X\n", regs.Y);
+    printf("SP: 0x%02X\n", regs.SP);
+    printf("PC: 0x%04X\n", regs.PC);
+    printf("SR: 0x%02X\n\n", regs.SR.byte);
     
-    printf("C: %u\n", regs.SR.C);
-    printf("Z: %u\n", regs.SR.Z);
-    printf("I: %u\n", regs.SR.I);
-    printf("D: %u\n", regs.SR.D);
-    printf("B: %u\n", regs.SR.B);
-    printf("R: -\n");
-    printf("V: %u\n", regs.SR.V);
-    printf("N: %u\n", regs.SR.N);
+    printf("C Z I D B R V N\n");
+
+    printf("%u ", regs.SR.C);
+    printf("%u ", regs.SR.Z);
+    printf("%u ", regs.SR.I);
+    printf("%u ", regs.SR.D);
+    printf("%u ", regs.SR.B);
+    printf("- ");
+    printf("%u ", regs.SR.V);
+    printf("%u \n", regs.SR.N);
 }
+
 
 void printInstruction(Instruction instruction) {
     printf("------------------------------------------------\n");
