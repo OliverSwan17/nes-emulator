@@ -6,9 +6,9 @@ Registers regs;
 Memory memory;
 
 void powerUp() {
-    regs.A = 0;
+    regs.A = 5;
     regs.X = 0;
-    regs.Y = 0;
+    regs.Y = 10;
     regs.PC = sizeof(Memory) - sizeof(memory.program); // Will change for NES
     regs.SP = 0xFF;
     regs.SR.C = 0;
@@ -23,10 +23,14 @@ void powerUp() {
     displayRegisters(regs);
 
     //u8 code[] = {0x20, 0x05, 0x08, 0xEA, 0xCA, 0xEA, 0xEA, 0xEA, 0xE8, 0x60}; // Testing JSR and RTS
-    u8 code[] = {0x48, 0xEA, 0x68};
+    // u8 code[] = {0x48, 0xEA, 0x68}; // Testing push and pop A
+    
+    u8 code[] = {0xAA, 0x9A, 0x98, 0x8A, 0xA8};
+    //            TAX   TXS   TYA   TXA   TAY
+
     memcpy(memory.program, code, sizeof(code));
 
-    int remainingInstructions = 3;
+    int remainingInstructions = 5;
     Instruction instruction;
     while (remainingInstructions) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC);
@@ -63,7 +67,13 @@ void initInstructionMetaData() {
 
     imdLookup[0x48] = (InstructionMetaData){"PHA", IMPLIED, 1, 3};
     imdLookup[0x68] = (InstructionMetaData){"PLA", IMPLIED, 1, 4};
-    
+
+    imdLookup[0xAA] = (InstructionMetaData){"TAX", IMPLIED, 1, 2};
+    imdLookup[0xA8] = (InstructionMetaData){"TAY", IMPLIED, 1, 2};
+    imdLookup[0xBA] = (InstructionMetaData){"TSX", IMPLIED, 1, 2};
+    imdLookup[0x8A] = (InstructionMetaData){"TXA", IMPLIED, 1, 2};
+    imdLookup[0x9A] = (InstructionMetaData){"TXS", IMPLIED, 1, 2};
+    imdLookup[0x98] = (InstructionMetaData){"TYA", IMPLIED, 1, 2};
 }
 
 Instruction identifyInstruction(u8 *binary) {
@@ -122,6 +132,19 @@ void executeInstruction(Instruction instruction) {
         PHA();
     if (strcmp(instruction.mnemonic, "PLA") == 0)
         PLA();
+
+    if (strcmp(instruction.mnemonic, "TAX") == 0)
+        TAX();
+    if (strcmp(instruction.mnemonic, "TAY") == 0)
+        TAY();
+    if (strcmp(instruction.mnemonic, "TSX") == 0)
+        TSX();
+    if (strcmp(instruction.mnemonic, "TXA") == 0)
+        TXA();
+    if (strcmp(instruction.mnemonic, "TXS") == 0)
+        TXS();
+    if (strcmp(instruction.mnemonic, "TYA") == 0)
+        TYA();
 }
 
 void displayRegisters(Registers regs) {
@@ -255,6 +278,42 @@ void PLA() {
     regs.SP++;
     regs.A = memory.ram[0x100 + regs.SP];
 
-    regs.SR.Z = (regs.A == 0) ? 1 : 0;
-    regs.SR.N = (regs.A >> 7) ? 1 : 0;
+    UPDATE_Z_FLAG(regs.A);
+    UPDATE_N_FLAG(regs.A);
+}
+
+
+
+void TAX() {
+    regs.X = regs.A;
+    UPDATE_Z_FLAG(regs.X);
+    UPDATE_N_FLAG(regs.X);
+}
+
+void TAY() {
+    regs.Y = regs.A;
+    UPDATE_Z_FLAG(regs.Y);
+    UPDATE_N_FLAG(regs.Y);
+}
+
+void TSX() {
+    regs.X = regs.SP;
+    UPDATE_Z_FLAG(regs.X);
+    UPDATE_N_FLAG(regs.X);
+}
+
+void TXA() {
+    regs.A = regs.X;
+    UPDATE_Z_FLAG(regs.A);
+    UPDATE_N_FLAG(regs.A);
+}
+
+void TXS() {
+    regs.SP = regs.X;
+}
+
+void TYA() {
+    regs.A = regs.Y;
+    UPDATE_Z_FLAG(regs.A);
+    UPDATE_N_FLAG(regs.A);
 }

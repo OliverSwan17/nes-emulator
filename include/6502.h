@@ -114,6 +114,24 @@ void RTS();
 void PHA();
 void PLA();
 
+void TAX();
+void TAY();
+void TSX();
+void TXA();
+void TXS();
+void TYA();
+
 // Utils
 void displayRegisters(Registers regs);
 void printInstruction(Instruction Instruction);
+
+// Macros
+#define UPDATE_Z_FLAG(value) \
+    do { \
+        regs.SR.Z = ((value) == 0) ? 1 : 0; \
+    } while (0)
+
+#define UPDATE_N_FLAG(value) \
+    do { \
+        regs.SR.N = ((value) >> 7) ? 1 : 0; \
+    } while (0)
