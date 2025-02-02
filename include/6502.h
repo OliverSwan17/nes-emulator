@@ -92,24 +92,24 @@ void executeInstruction(Instruction instruction);
 void powerUp();
 
 // Opcodes
+void NOP();
+
 void INX();
 void INY();
-
 void DEX();
 void DEY();
 
-void NOP();
-void JSR(Instruction instruction);
 
-// Flags
+void SEC();
+void SED();
+void SEI();
 void CLC();
 void CLD();
 void CLI();
 void CLV();
 
-void SEC();
-void SED();
-void SEI();
+void JSR(Instruction instruction);
+void RTS();
 
 // Utils
 void displayRegisters(Registers regs);

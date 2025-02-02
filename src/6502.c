@@ -23,17 +23,17 @@ void powerUp() {
     displayRegisters(regs);
 
     //u8 code[] = {0xCA, 0xEA, 0xEA, 0x20, 0xCB, 0xAB, 0xE8, 0x88};
-    u8 code[] = {0x20, 0x04, 0x08, 0xEA, 0xCA, 0xF8}; // Jumps to the DEX instruction
+    u8 code[] = {0x20, 0x05, 0x08, 0xEA, 0xCA, 0xEA, 0xEA, 0xEA, 0xE8, 0x60};
     memcpy(memory.program, code, sizeof(code));
 
-    int remainingInstructions = 3;
+    int remainingInstructions = 8;
     Instruction instruction;
     while (remainingInstructions) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC);
         printInstruction(instruction);
         executeInstruction(instruction);
 
-        if (strcmp(instruction.mnemonic, "JSR") != 0) // Add other branch and jumps in the future
+        if (strcmp(instruction.mnemonic, "JSR") != 0 && strcmp(instruction.mnemonic, "RTS") != 0) // Add other branch and jumps in the future
             regs.PC += instruction.bytes;
 
         displayRegisters(regs);
@@ -43,23 +43,24 @@ void powerUp() {
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
 void initInstructionMetaData() {
-    // Decrements and Increments
+    imdLookup[0xEA] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
+
     imdLookup[0xE8] = (InstructionMetaData){"INX", IMPLIED, 1, 2};
     imdLookup[0xC8] = (InstructionMetaData){"INY", IMPLIED, 1, 2};
     imdLookup[0xCA] = (InstructionMetaData){"DEX", IMPLIED, 1, 2};
     imdLookup[0x88] = (InstructionMetaData){"DEY", IMPLIED, 1, 2};
 
-    imdLookup[0xEA] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
-    imdLookup[0x20] = (InstructionMetaData){"JSR", ABSOLUTE, 3, 6};
-
     imdLookup[0x18] = (InstructionMetaData){"CLC", IMPLIED, 1, 2};
     imdLookup[0xD8] = (InstructionMetaData){"CLD", IMPLIED, 1, 2};
     imdLookup[0x58] = (InstructionMetaData){"CLI", IMPLIED, 1, 2};
     imdLookup[0xB8] = (InstructionMetaData){"CLV", IMPLIED, 1, 2};
-
     imdLookup[0x38] = (InstructionMetaData){"SEC", IMPLIED, 1, 2};
     imdLookup[0xF8] = (InstructionMetaData){"SED", IMPLIED, 1, 2};
     imdLookup[0x78] = (InstructionMetaData){"SEI", IMPLIED, 1, 2};
+
+    imdLookup[0x20] = (InstructionMetaData){"JSR", ABSOLUTE, 3, 6};
+    imdLookup[0x60] = (InstructionMetaData){"RTS", IMPLIED, 1, 6};
+    
 }
 
 Instruction identifyInstruction(u8 *binary) {
@@ -81,6 +82,14 @@ Instruction identifyInstruction(u8 *binary) {
     return instruction;
 }
 
+
+
+void NOP() {
+    return;
+}
+
+
+
 void INX() {
     regs.X += 1;
 }
@@ -97,16 +106,19 @@ void DEY() {
     regs.Y -= 1;
 }
 
-void NOP() {
-    return;
+
+
+void SEC(){
+    regs.SR.C = 1;
 }
 
-void JSR(Instruction instruction) {
-    memory.ram[regs.SP + 0x100] = regs.PC + 2; // Pushing PC + 2 to the stack
-    regs.PC = instruction.operand.bytes; // Setting the PC
-    regs.SP -= 1;
+void SED(){
+    regs.SR.D = 1;
 }
 
+void SEI(){
+    regs.SR.I = 1;
+}
 
 void CLC(){
     regs.SR.C = 0;
@@ -124,21 +136,35 @@ void CLV(){
     regs.SR.V = 0;    
 }
 
-void SEC(){
-    regs.SR.C = 1;
+
+
+void JSR(Instruction instruction) {
+    u16 returnAddr = regs.PC + 2; // Only + 2 because RTS will automatically add 1.
+
+    regs.SP--;
+    memory.ram[0x100 + regs.SP] = (returnAddr >> 8) & 0xFF; // High byte
+
+    regs.SP--;
+    memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
+    
+    regs.PC = instruction.operand.bytes; // Setting the PC
 }
 
-void SED(){
-    regs.SR.D = 1;
-    printf("Nigger!!!!!!!!!!!!!!!!!!!!!");
-}
+void RTS() {
+    u16 returnAddr = memory.ram[regs.SP + 0x100];
+    regs.SP++;
 
-void SEI(){
-    regs.SR.I = 1;
+    returnAddr |= memory.ram[regs.SP + 0x100] << 8;
+    regs.SP++;
+
+    regs.PC = returnAddr + 1;
 }
 
 
 void executeInstruction(Instruction instruction) {
+    if (strcmp(instruction.mnemonic, "NOP") == 0)
+        NOP();
+
     if (strcmp(instruction.mnemonic, "INX") == 0)
         INX();
     if (strcmp(instruction.mnemonic, "INY") == 0)
@@ -147,10 +173,6 @@ void executeInstruction(Instruction instruction) {
         DEX();
     if (strcmp(instruction.mnemonic, "DEY") == 0)
         DEY();
-    if (strcmp(instruction.mnemonic, "NOP") == 0)
-        NOP();
-    if (strcmp(instruction.mnemonic, "JSR") == 0)
-        JSR(instruction);
 
     if (strcmp(instruction.mnemonic, "CLC") == 0)
         CLC();
@@ -160,13 +182,17 @@ void executeInstruction(Instruction instruction) {
         CLI();
     if (strcmp(instruction.mnemonic, "CLV") == 0)
         CLV();
-
     if (strcmp(instruction.mnemonic, "SEC") == 0)
         SEC();
     if (strcmp(instruction.mnemonic, "SED") == 0)
         SED();
     if (strcmp(instruction.mnemonic, "SEI") == 0)
         SEI();
+
+    if (strcmp(instruction.mnemonic, "JSR") == 0)
+        JSR(instruction);
+    if (strcmp(instruction.mnemonic, "RTS") == 0)
+        RTS();
 }
 
 void displayRegisters(Registers regs) {
