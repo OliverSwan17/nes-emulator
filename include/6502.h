@@ -111,6 +111,9 @@ void CLV();
 void JSR(Instruction instruction);
 void RTS();
 
+void PHA();
+void PLA();
+
 // Utils
 void displayRegisters(Registers regs);
 void printInstruction(Instruction Instruction);

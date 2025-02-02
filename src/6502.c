@@ -22,11 +22,11 @@ void powerUp() {
 
     displayRegisters(regs);
 
-    //u8 code[] = {0xCA, 0xEA, 0xEA, 0x20, 0xCB, 0xAB, 0xE8, 0x88};
-    u8 code[] = {0x20, 0x05, 0x08, 0xEA, 0xCA, 0xEA, 0xEA, 0xEA, 0xE8, 0x60};
+    //u8 code[] = {0x20, 0x05, 0x08, 0xEA, 0xCA, 0xEA, 0xEA, 0xEA, 0xE8, 0x60}; // Testing JSR and RTS
+    u8 code[] = {0x48, 0xEA, 0x68};
     memcpy(memory.program, code, sizeof(code));
 
-    int remainingInstructions = 8;
+    int remainingInstructions = 3;
     Instruction instruction;
     while (remainingInstructions) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC);
@@ -60,6 +60,9 @@ void initInstructionMetaData() {
 
     imdLookup[0x20] = (InstructionMetaData){"JSR", ABSOLUTE, 3, 6};
     imdLookup[0x60] = (InstructionMetaData){"RTS", IMPLIED, 1, 6};
+
+    imdLookup[0x48] = (InstructionMetaData){"PHA", IMPLIED, 1, 3};
+    imdLookup[0x68] = (InstructionMetaData){"PLA", IMPLIED, 1, 4};
     
 }
 
@@ -81,85 +84,6 @@ Instruction identifyInstruction(u8 *binary) {
 
     return instruction;
 }
-
-
-
-void NOP() {
-    return;
-}
-
-
-
-void INX() {
-    regs.X += 1;
-}
-
-void INY() {
-    regs.Y += 1;
-}
-
-void DEX() {
-    regs.X -= 1;
-}
-
-void DEY() {
-    regs.Y -= 1;
-}
-
-
-
-void SEC(){
-    regs.SR.C = 1;
-}
-
-void SED(){
-    regs.SR.D = 1;
-}
-
-void SEI(){
-    regs.SR.I = 1;
-}
-
-void CLC(){
-    regs.SR.C = 0;
-}
-
-void CLD(){
-    regs.SR.D = 0;
-}
-
-void CLI(){
-    regs.SR.I = 0;
-}
-
-void CLV(){
-    regs.SR.V = 0;    
-}
-
-
-
-void JSR(Instruction instruction) {
-    u16 returnAddr = regs.PC + 2; // Only + 2 because RTS will automatically add 1.
-
-    regs.SP--;
-    memory.ram[0x100 + regs.SP] = (returnAddr >> 8) & 0xFF; // High byte
-
-    regs.SP--;
-    memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
-    
-    regs.PC = instruction.operand.bytes; // Setting the PC
-}
-
-void RTS() {
-    u16 returnAddr = memory.ram[regs.SP + 0x100];
-    regs.SP++;
-
-    returnAddr |= memory.ram[regs.SP + 0x100] << 8;
-    regs.SP++;
-
-    regs.PC = returnAddr + 1;
-}
-
 
 void executeInstruction(Instruction instruction) {
     if (strcmp(instruction.mnemonic, "NOP") == 0)
@@ -193,6 +117,11 @@ void executeInstruction(Instruction instruction) {
         JSR(instruction);
     if (strcmp(instruction.mnemonic, "RTS") == 0)
         RTS();
+
+    if (strcmp(instruction.mnemonic, "PHA") == 0)
+        PHA();
+    if (strcmp(instruction.mnemonic, "PLA") == 0)
+        PLA();
 }
 
 void displayRegisters(Registers regs) {
@@ -244,4 +173,88 @@ void printInstruction(Instruction instruction) {
 
     printf("Cycles: %u\n", instruction.cycles);
     printf("Bytes: %u\n", instruction.bytes);
+}
+
+void NOP() {
+    return;
+}
+
+void INX() {
+    regs.X += 1;
+}
+
+void INY() {
+    regs.Y += 1;
+}
+
+void DEX() {
+    regs.X -= 1;
+}
+
+void DEY() {
+    regs.Y -= 1;
+}
+
+void SEC(){
+    regs.SR.C = 1;
+}
+
+void SED(){
+    regs.SR.D = 1;
+}
+
+void SEI(){
+    regs.SR.I = 1;
+}
+
+void CLC(){
+    regs.SR.C = 0;
+}
+
+void CLD(){
+    regs.SR.D = 0;
+}
+
+void CLI(){
+    regs.SR.I = 0;
+}
+
+void CLV(){
+    regs.SR.V = 0;    
+}
+
+void JSR(Instruction instruction) {
+    u16 returnAddr = regs.PC + 2; // Only + 2 because RTS will automatically add 1.
+
+    regs.SP--;
+    memory.ram[0x100 + regs.SP] = (returnAddr >> 8) & 0xFF; // High byte
+
+    regs.SP--;
+    memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
+    
+    regs.PC = instruction.operand.bytes; // Setting the PC
+}
+
+void RTS() {
+    u16 returnAddr = memory.ram[regs.SP + 0x100]; // Pop low byte
+    regs.SP++;
+
+    returnAddr |= memory.ram[regs.SP + 0x100] << 8; // Pop high byte
+    regs.SP++;
+
+    regs.PC = returnAddr + 1;
+}
+
+void PHA() {
+    memory.ram[0x100 + regs.SP] = regs.A;
+    regs.SP--;
+    regs.A = 0;
+}
+
+void PLA() {
+    regs.SP++;
+    regs.A = memory.ram[0x100 + regs.SP];
+
+    regs.SR.Z = (regs.A == 0) ? 1 : 0;
+    regs.SR.N = (regs.A >> 7) ? 1 : 0;
 }
