@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <curses.h>
 
 typedef uint8_t byte;
 typedef uint8_t u8;
@@ -124,6 +125,11 @@ void TYA();
 // Utils
 void displayRegisters(Registers regs);
 void printInstruction(Instruction Instruction);
+
+// Draw
+void drawZeroPage();
+void drawProgram();
+void drawRegisters();
 
 // Macros
 #define UPDATE_Z_FLAG(value) \

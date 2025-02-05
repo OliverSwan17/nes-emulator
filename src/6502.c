@@ -147,6 +147,34 @@ void executeInstruction(Instruction instruction) {
         TYA();
 }
 
+void drawZeroPage() {
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            printw("%02X ", memory.ram[i * 16 + j]);
+        }
+        printw("\n");
+    }
+    printw("\n");
+
+}
+
+void drawProgram() {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 16; j++) {
+            printw("%02X ", memory.program[i * 16 + j]);
+        }
+        printw("\n");
+    }
+}
+
+void drawRegisters() {
+    mvprintw(0, 50, " A: 0x%02X\n", regs.A);
+    mvprintw(1, 50, " X: 0x%02X\n", regs.X);
+    mvprintw(2, 50, " Y: 0x%02X\n", regs.Y);
+    mvprintw(3, 50, "SP: 0x%02X\n", regs.SP);
+    mvprintw(4, 50, "PC: 0x%04X\n", regs.PC);
+}
+
 void displayRegisters(Registers regs) {
     printf("------------------------------------------------\n");
     printf("A: 0x%02X\n", regs.A);
