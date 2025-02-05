@@ -86,6 +86,8 @@ typedef struct Memory {
     u8 program[256];
 } Memory;
 
+#define PROGRAM_OFFSET 2048
+
 // Functions
 void initInstructionMetaData();
 Instruction identifyInstruction(u8 *binary);
@@ -122,16 +124,14 @@ void TXA();
 void TXS();
 void TYA();
 
-// Utils
-void displayRegisters(Registers regs);
-void printInstruction(Instruction Instruction);
-
 // Draw
 void drawZeroPage();
 void drawProgram(u8 pcOffset);
+void drawStack(u8 spOffset);
 void drawRegisters();
 void drawStatusBits();
 void drawInstructionToExecute(Instruction instruction);
+void drawText(Instruction instruction);
 
 // Macros
 #define UPDATE_Z_FLAG(value) \
@@ -143,3 +143,7 @@ void drawInstructionToExecute(Instruction instruction);
     do { \
         regs.SR.N = ((value) >> 7) ? 1 : 0; \
     } while (0)
+
+// Unused
+void printRegisters(Registers regs);
+void printInstruction(Instruction Instruction);

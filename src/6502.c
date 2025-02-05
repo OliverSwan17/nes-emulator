@@ -1,7 +1,6 @@
 #include "6502.h"
 
 InstructionMetaData imdLookup[256];
-
 Registers regs;
 Memory memory;
 
@@ -20,29 +19,28 @@ void powerUp() {
     regs.SR.V = 0;
     regs.SR.N = 0;
 
-    displayRegisters(regs);
-
     //u8 code[] = {0x20, 0x05, 0x08, 0xEA, 0xCA, 0xEA, 0xEA, 0xEA, 0xE8, 0x60}; // Testing JSR and RTS
-    // u8 code[] = {0x48, 0xEA, 0x68}; // Testing push and pop A
-    
-    u8 code[] = {0xAA, 0x9A, 0x98, 0x8A, 0xA8};
+    u8 code[] = {0x48, 0xEA, 0x68, 0x22}; // Testing push and pop A
+
+    //u8 code[] = {0xAA, 0x9A, 0x98, 0x8A, 0xA8};
     //            TAX   TXS   TYA   TXA   TAY
 
     memcpy(memory.program, code, sizeof(code));
 
-    int remainingInstructions = 5;
     Instruction instruction;
-    while (remainingInstructions) {
-        instruction = identifyInstruction((u8 *)&memory + regs.PC);
-        printInstruction(instruction);
-        executeInstruction(instruction);
+    while (1) {
+        instruction = identifyInstruction((u8 *)&memory + regs.PC); // Fetch an decode
+        if (instruction.opcode.byte == 0x22)
+            break;
+
+        drawText(instruction);
+        executeInstruction(instruction); // Execute
 
         if (strcmp(instruction.mnemonic, "JSR") != 0 && strcmp(instruction.mnemonic, "RTS") != 0) // Add other branch and jumps in the future
             regs.PC += instruction.bytes;
-
-        displayRegisters(regs);
-        remainingInstructions--;
     }
+
+    drawText(instruction);
 }
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
@@ -74,6 +72,9 @@ void initInstructionMetaData() {
     imdLookup[0x8A] = (InstructionMetaData){"TXA", IMPLIED, 1, 2};
     imdLookup[0x9A] = (InstructionMetaData){"TXS", IMPLIED, 1, 2};
     imdLookup[0x98] = (InstructionMetaData){"TYA", IMPLIED, 1, 2};
+
+    // Custom instructions
+    imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 }
 
 Instruction identifyInstruction(u8 *binary) {
@@ -169,6 +170,18 @@ void drawInstructionToExecute(Instruction instruction) {
     mvprintw(12, 50, "Cycles: %u\n", instruction.cycles);
 }
 
+void drawText(Instruction instruction) {
+    clear();
+    drawZeroPage();
+    drawStack(regs.SP);
+    drawProgram(regs.PC - PROGRAM_OFFSET);
+    drawRegisters();
+    drawStatusBits();
+    drawInstructionToExecute(instruction);
+    refresh();
+    getch();
+}
+
 void drawZeroPage() {
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
@@ -196,6 +209,23 @@ void drawProgram(u8 pcOffset) {
     }
 }
 
+void drawStack(u8 spOffset) {
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            if (j + i * 16 == spOffset) {
+                attron(A_REVERSE);    // Reverse video (swap foreground and background)
+                printw("%02X", memory.ram[0x100 + i * 16 + j]);
+                attroff(A_REVERSE);
+                printw(" ");
+            }
+            else
+                printw("%02X ", memory.ram[0x100 + i * 16 + j]);
+        }
+        printw("\n");
+    }
+    printw("\n");
+}
+
 void drawStatusBits() {
     mvprintw(0, 62, "C Z I D B R V N\n");
     mvprintw(1, 62, "%u", regs.SR.C);
@@ -205,7 +235,7 @@ void drawStatusBits() {
     mvprintw(1, 70, "%u", regs.SR.B);
     mvprintw(1, 72, "- ");
     mvprintw(1, 74, "%u", regs.SR.V);
-    mvprintw(1, 76, "%u\n", regs.SR.N);
+    mvprintw(1, 76, "%u", regs.SR.N);
 }
 
 void drawRegisters() {
@@ -214,58 +244,7 @@ void drawRegisters() {
     mvprintw(2, 50, " Y: 0x%02X\n", regs.Y);
     mvprintw(3, 50, "SP: 0x%02X\n", regs.SP);
     mvprintw(4, 50, "PC: 0x%04X\n", regs.PC);
-    mvprintw(5, 50, "SR: 0x%02X\n\n", regs.SR.byte);
-}
-
-void displayRegisters(Registers regs) {
-    printf("------------------------------------------------\n");
-    printf("A: 0x%02X\n", regs.A);
-    printf("X: 0x%02X\n", regs.X);
-    printf("Y: 0x%02X\n", regs.Y);
-    printf("SP: 0x%02X\n", regs.SP);
-    printf("PC: 0x%04X\n", regs.PC);
-    printf("SR: 0x%02X\n\n", regs.SR.byte);
-    
-    printf("C Z I D B R V N\n");
-
-    printf("%u ", regs.SR.C);
-    printf("%u ", regs.SR.Z);
-    printf("%u ", regs.SR.I);
-    printf("%u ", regs.SR.D);
-    printf("%u ", regs.SR.B);
-    printf("- ");
-    printf("%u ", regs.SR.V);
-    printf("%u \n", regs.SR.N);
-}
-
-
-void printInstruction(Instruction instruction) {
-    printf("------------------------------------------------\n");
-    printf("Opcode byte: 0x%02X\n", instruction.opcode.byte);
-    printf("Low Nibble: 0x%X\n", instruction.opcode.lowNibble);
-    printf("High Nibble: 0x%X\n\n", instruction.opcode.highNibble);
-
-    printf("Operand bytes: 0x%04X\n", instruction.operand.bytes);
-    printf("Low Byte: 0x%02X\n", instruction.operand.lowByte);
-    printf("High Byte: 0x%02X\n\n", instruction.operand.highByte);
-
-    printf("Mnemonic: %s\n", instruction.mnemonic);
-
-    printf("Addressing Mode: ");
-    switch (instruction.addressingMode) {
-        case IMPLIED:
-            printf("IMPLIED\n");
-            break;
-        case ABSOLUTE:
-            printf("ABSOLUTE\n");
-            break;
-        default:
-            printf("TO_BE_IMPLEMENTED\n");
-            break;
-    }
-
-    printf("Cycles: %u\n", instruction.cycles);
-    printf("Bytes: %u\n", instruction.bytes);
+    mvprintw(5, 50, "SR: 0x%02X\n", regs.SR.byte);
 }
 
 void NOP() {
@@ -386,4 +365,56 @@ void TYA() {
     regs.A = regs.Y;
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);
+}
+
+
+void printRegisters(Registers regs) {
+    printf("------------------------------------------------\n");
+    printf("A: 0x%02X\n", regs.A);
+    printf("X: 0x%02X\n", regs.X);
+    printf("Y: 0x%02X\n", regs.Y);
+    printf("SP: 0x%02X\n", regs.SP);
+    printf("PC: 0x%04X\n", regs.PC);
+    printf("SR: 0x%02X\n\n", regs.SR.byte);
+    
+    printf("C Z I D B R V N\n");
+
+    printf("%u ", regs.SR.C);
+    printf("%u ", regs.SR.Z);
+    printf("%u ", regs.SR.I);
+    printf("%u ", regs.SR.D);
+    printf("%u ", regs.SR.B);
+    printf("- ");
+    printf("%u ", regs.SR.V);
+    printf("%u \n", regs.SR.N);
+}
+
+
+void printInstruction(Instruction instruction) {
+    printf("------------------------------------------------\n");
+    printf("Opcode byte: 0x%02X\n", instruction.opcode.byte);
+    printf("Low Nibble: 0x%X\n", instruction.opcode.lowNibble);
+    printf("High Nibble: 0x%X\n\n", instruction.opcode.highNibble);
+
+    printf("Operand bytes: 0x%04X\n", instruction.operand.bytes);
+    printf("Low Byte: 0x%02X\n", instruction.operand.lowByte);
+    printf("High Byte: 0x%02X\n\n", instruction.operand.highByte);
+
+    printf("Mnemonic: %s\n", instruction.mnemonic);
+
+    printf("Addressing Mode: ");
+    switch (instruction.addressingMode) {
+        case IMPLIED:
+            printf("IMPLIED\n");
+            break;
+        case ABSOLUTE:
+            printf("ABSOLUTE\n");
+            break;
+        default:
+            printf("TO_BE_IMPLEMENTED\n");
+            break;
+    }
+
+    printf("Cycles: %u\n", instruction.cycles);
+    printf("Bytes: %u\n", instruction.bytes);
 }

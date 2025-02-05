@@ -5,19 +5,12 @@ extern Memory memory;
 
 int main() {
     initscr();
+    resize_term(40, 80);
     PDC_set_title("6502");
+
     initInstructionMetaData();
     powerUp();
-
-    drawZeroPage();
-    drawProgram(3);
-    drawRegisters();
-    drawStatusBits();
-    Instruction instruction = identifyInstruction((u8 *)&memory + sizeof(Memory) - sizeof(memory.program));
-    drawInstructionToExecute(instruction);
-    refresh();
-    getch();
-    endwin();
     
+    endwin();
     return 0;
 }
