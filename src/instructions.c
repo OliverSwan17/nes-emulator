@@ -1,7 +1,105 @@
 #include "6502.h"
+#include "instructions.h"
 
 extern Registers regs;
 extern Memory memory;
+extern InstructionMetaData imdLookup[256];
+
+// Mnemonic, Addressing Mode, Bytes, Cycles
+void initInstructionMetaData() {
+    imdLookup[0xEA] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
+
+    imdLookup[0xE8] = (InstructionMetaData){"INX", IMPLIED, 1, 2};
+    imdLookup[0xC8] = (InstructionMetaData){"INY", IMPLIED, 1, 2};
+    imdLookup[0xCA] = (InstructionMetaData){"DEX", IMPLIED, 1, 2};
+    imdLookup[0x88] = (InstructionMetaData){"DEY", IMPLIED, 1, 2};
+
+    imdLookup[0x18] = (InstructionMetaData){"CLC", IMPLIED, 1, 2};
+    imdLookup[0xD8] = (InstructionMetaData){"CLD", IMPLIED, 1, 2};
+    imdLookup[0x58] = (InstructionMetaData){"CLI", IMPLIED, 1, 2};
+    imdLookup[0xB8] = (InstructionMetaData){"CLV", IMPLIED, 1, 2};
+    imdLookup[0x38] = (InstructionMetaData){"SEC", IMPLIED, 1, 2};
+    imdLookup[0xF8] = (InstructionMetaData){"SED", IMPLIED, 1, 2};
+    imdLookup[0x78] = (InstructionMetaData){"SEI", IMPLIED, 1, 2};
+
+    imdLookup[0x20] = (InstructionMetaData){"JSR", ABSOLUTE, 3, 6};
+    imdLookup[0x60] = (InstructionMetaData){"RTS", IMPLIED, 1, 6};
+
+    imdLookup[0x48] = (InstructionMetaData){"PHA", IMPLIED, 1, 3};
+    imdLookup[0x68] = (InstructionMetaData){"PLA", IMPLIED, 1, 4};
+
+    imdLookup[0xAA] = (InstructionMetaData){"TAX", IMPLIED, 1, 2};
+    imdLookup[0xA8] = (InstructionMetaData){"TAY", IMPLIED, 1, 2};
+    imdLookup[0xBA] = (InstructionMetaData){"TSX", IMPLIED, 1, 2};
+    imdLookup[0x8A] = (InstructionMetaData){"TXA", IMPLIED, 1, 2};
+    imdLookup[0x9A] = (InstructionMetaData){"TXS", IMPLIED, 1, 2};
+    imdLookup[0x98] = (InstructionMetaData){"TYA", IMPLIED, 1, 2};
+
+    imdLookup[0xA9] = (InstructionMetaData){"LDA", IMMEDIATE, 2, 2};
+    imdLookup[0xA5] = (InstructionMetaData){"LDA", ZEROPAGE, 2, 3};
+
+    imdLookup[0x85] = (InstructionMetaData){"STA", ZEROPAGE, 2, 3};
+
+    // Custom instructions
+    imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
+}
+
+void executeInstruction(Instruction instruction) {
+    if (strcmp(instruction.mnemonic, "NOP") == 0)
+        NOP();
+
+    if (strcmp(instruction.mnemonic, "INX") == 0)
+        INX();
+    if (strcmp(instruction.mnemonic, "INY") == 0)
+        INY();
+    if (strcmp(instruction.mnemonic, "DEX") == 0)
+        DEX();
+    if (strcmp(instruction.mnemonic, "DEY") == 0)
+        DEY();
+
+    if (strcmp(instruction.mnemonic, "CLC") == 0)
+        CLC();
+    if (strcmp(instruction.mnemonic, "CLD") == 0)
+        CLD();
+    if (strcmp(instruction.mnemonic, "CLI") == 0)
+        CLI();
+    if (strcmp(instruction.mnemonic, "CLV") == 0)
+        CLV();
+    if (strcmp(instruction.mnemonic, "SEC") == 0)
+        SEC();
+    if (strcmp(instruction.mnemonic, "SED") == 0)
+        SED();
+    if (strcmp(instruction.mnemonic, "SEI") == 0)
+        SEI();
+
+    if (strcmp(instruction.mnemonic, "JSR") == 0)
+        JSR(instruction);
+    if (strcmp(instruction.mnemonic, "RTS") == 0)
+        RTS();
+
+    if (strcmp(instruction.mnemonic, "PHA") == 0)
+        PHA();
+    if (strcmp(instruction.mnemonic, "PLA") == 0)
+        PLA();
+
+    if (strcmp(instruction.mnemonic, "TAX") == 0)
+        TAX();
+    if (strcmp(instruction.mnemonic, "TAY") == 0)
+        TAY();
+    if (strcmp(instruction.mnemonic, "TSX") == 0)
+        TSX();
+    if (strcmp(instruction.mnemonic, "TXA") == 0)
+        TXA();
+    if (strcmp(instruction.mnemonic, "TXS") == 0)
+        TXS();
+    if (strcmp(instruction.mnemonic, "TYA") == 0)
+        TYA();
+    
+    if (strcmp(instruction.mnemonic, "LDA") == 0)
+        LDA(instruction);
+    if (strcmp(instruction.mnemonic, "STA") == 0)
+        STA(instruction);
+}
 
 void NOP() {
     return;
@@ -76,7 +174,6 @@ void RTS() {
 void PHA() {
     memory.ram[0x100 + regs.SP] = regs.A;
     regs.SP--;
-    regs.A = 0;
 }
 
 void PLA() {
@@ -121,54 +218,20 @@ void TYA() {
     UPDATE_N_FLAG(regs.A);
 }
 
-void executeInstruction(Instruction instruction) {
-    if (strcmp(instruction.mnemonic, "NOP") == 0)
-        NOP();
+void LDA(Instruction instruction) { 
+    if (instruction.addressingMode == IMMEDIATE) { // A9
+        regs.A = instruction.operand.lowByte;
+    }else if (instruction.addressingMode == ZEROPAGE) { // A5
+        regs.A = memory.ram[instruction.operand.lowByte];
+    }
 
-    if (strcmp(instruction.mnemonic, "INX") == 0)
-        INX();
-    if (strcmp(instruction.mnemonic, "INY") == 0)
-        INY();
-    if (strcmp(instruction.mnemonic, "DEX") == 0)
-        DEX();
-    if (strcmp(instruction.mnemonic, "DEY") == 0)
-        DEY();
 
-    if (strcmp(instruction.mnemonic, "CLC") == 0)
-        CLC();
-    if (strcmp(instruction.mnemonic, "CLD") == 0)
-        CLD();
-    if (strcmp(instruction.mnemonic, "CLI") == 0)
-        CLI();
-    if (strcmp(instruction.mnemonic, "CLV") == 0)
-        CLV();
-    if (strcmp(instruction.mnemonic, "SEC") == 0)
-        SEC();
-    if (strcmp(instruction.mnemonic, "SED") == 0)
-        SED();
-    if (strcmp(instruction.mnemonic, "SEI") == 0)
-        SEI();
+    UPDATE_Z_FLAG(regs.A);
+    UPDATE_N_FLAG(regs.A);
+}
 
-    if (strcmp(instruction.mnemonic, "JSR") == 0)
-        JSR(instruction);
-    if (strcmp(instruction.mnemonic, "RTS") == 0)
-        RTS();
-
-    if (strcmp(instruction.mnemonic, "PHA") == 0)
-        PHA();
-    if (strcmp(instruction.mnemonic, "PLA") == 0)
-        PLA();
-
-    if (strcmp(instruction.mnemonic, "TAX") == 0)
-        TAX();
-    if (strcmp(instruction.mnemonic, "TAY") == 0)
-        TAY();
-    if (strcmp(instruction.mnemonic, "TSX") == 0)
-        TSX();
-    if (strcmp(instruction.mnemonic, "TXA") == 0)
-        TXA();
-    if (strcmp(instruction.mnemonic, "TXS") == 0)
-        TXS();
-    if (strcmp(instruction.mnemonic, "TYA") == 0)
-        TYA();
+void STA(Instruction instruction) {
+    if (instruction.addressingMode == ZEROPAGE) { // 85
+        memory.ram[instruction.operand.lowByte] = regs.A;
+    }
 }

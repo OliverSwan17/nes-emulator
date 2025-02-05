@@ -73,6 +73,12 @@ void drawInstructionToExecute(Instruction instruction) {
         case ABSOLUTE:
             strcpy(mode, "ABSOLUTE");
             break;
+        case IMMEDIATE:
+            strcpy(mode, "IMMEDIATE");
+            break;
+        case ZEROPAGE:
+            strcpy(mode, "ZEROPAGE");
+            break;
         default:
             strcpy(mode, "TO_BE_IMPLEMENTED");
             break;

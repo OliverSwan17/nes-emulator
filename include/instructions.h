@@ -30,3 +30,6 @@ void TSX();
 void TXA();
 void TXS();
 void TYA();
+
+void LDA(Instruction instruction);
+void STA(Instruction instruction);
