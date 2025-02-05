@@ -6,6 +6,8 @@
 #include <string.h>
 #include <curses.h>
 
+#define PROGRAM_OFFSET 2048
+
 typedef uint8_t byte;
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -86,52 +88,11 @@ typedef struct Memory {
     u8 program[256];
 } Memory;
 
-#define PROGRAM_OFFSET 2048
 
 // Functions
 void initInstructionMetaData();
 Instruction identifyInstruction(u8 *binary);
-void executeInstruction(Instruction instruction);
 void powerUp();
-
-// Opcodes
-void NOP();
-
-void INX();
-void INY();
-void DEX();
-void DEY();
-
-
-void SEC();
-void SED();
-void SEI();
-void CLC();
-void CLD();
-void CLI();
-void CLV();
-
-void JSR(Instruction instruction);
-void RTS();
-
-void PHA();
-void PLA();
-
-void TAX();
-void TAY();
-void TSX();
-void TXA();
-void TXS();
-void TYA();
-
-// Draw
-void drawZeroPage();
-void drawProgram(u8 pcOffset);
-void drawStack(u8 spOffset);
-void drawRegisters();
-void drawStatusBits();
-void drawInstructionToExecute(Instruction instruction);
-void drawText(Instruction instruction);
 
 // Macros
 #define UPDATE_Z_FLAG(value) \
@@ -144,6 +105,3 @@ void drawText(Instruction instruction);
         regs.SR.N = ((value) >> 7) ? 1 : 0; \
     } while (0)
 
-// Unused
-void printRegisters(Registers regs);
-void printInstruction(Instruction Instruction);
