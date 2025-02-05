@@ -128,8 +128,10 @@ void printInstruction(Instruction Instruction);
 
 // Draw
 void drawZeroPage();
-void drawProgram();
+void drawProgram(u8 pcOffset);
 void drawRegisters();
+void drawStatusBits();
+void drawInstructionToExecute(Instruction instruction);
 
 // Macros
 #define UPDATE_Z_FLAG(value) \

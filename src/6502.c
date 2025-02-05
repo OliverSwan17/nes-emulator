@@ -147,6 +147,28 @@ void executeInstruction(Instruction instruction) {
         TYA();
 }
 
+void drawInstructionToExecute(Instruction instruction) {
+    char mode[20];
+    switch (instruction.addressingMode) {
+        case IMPLIED:
+            strcpy(mode, "IMPLIED");
+            break;
+        case ABSOLUTE:
+            strcpy(mode, "ABSOLUTE");
+            break;
+        default:
+            strcpy(mode, "TO_BE_IMPLEMENTED");
+            break;
+    }
+
+    mvprintw(7, 50, "Mnemonic: %s\n", instruction.mnemonic);
+    mvprintw(8, 50, "Addressing Mode: %s", mode);
+    mvprintw(9, 50, "Opcode byte: 0x%02X\n", instruction.opcode.byte);
+    mvprintw(10, 50, "Operand bytes: 0x%04X\n", instruction.operand.bytes);
+    mvprintw(11, 50, "Bytes: %u\n", instruction.bytes);
+    mvprintw(12, 50, "Cycles: %u\n", instruction.cycles);
+}
+
 void drawZeroPage() {
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
@@ -158,13 +180,32 @@ void drawZeroPage() {
 
 }
 
-void drawProgram() {
+void drawProgram(u8 pcOffset) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 16; j++) {
-            printw("%02X ", memory.program[i * 16 + j]);
+            if (j + i * 16 == pcOffset) {
+                attron(A_REVERSE);    // Reverse video (swap foreground and background)
+                printw("%02X", memory.program[i * 16 + j]);
+                attroff(A_REVERSE);
+                printw(" ");
+            }
+            else
+                printw("%02X ", memory.program[i * 16 + j]);
         }
         printw("\n");
     }
+}
+
+void drawStatusBits() {
+    mvprintw(0, 62, "C Z I D B R V N\n");
+    mvprintw(1, 62, "%u", regs.SR.C);
+    mvprintw(1, 64, "%u", regs.SR.Z);
+    mvprintw(1, 66, "%u", regs.SR.I);
+    mvprintw(1, 68, "%u", regs.SR.D);
+    mvprintw(1, 70, "%u", regs.SR.B);
+    mvprintw(1, 72, "- ");
+    mvprintw(1, 74, "%u", regs.SR.V);
+    mvprintw(1, 76, "%u\n", regs.SR.N);
 }
 
 void drawRegisters() {
@@ -173,6 +214,7 @@ void drawRegisters() {
     mvprintw(2, 50, " Y: 0x%02X\n", regs.Y);
     mvprintw(3, 50, "SP: 0x%02X\n", regs.SP);
     mvprintw(4, 50, "PC: 0x%04X\n", regs.PC);
+    mvprintw(5, 50, "SR: 0x%02X\n\n", regs.SR.byte);
 }
 
 void displayRegisters(Registers regs) {
