@@ -37,8 +37,17 @@ void initInstructionMetaData() {
 
     imdLookup[0xA9] = (InstructionMetaData){"LDA", IMMEDIATE, 2, 2};
     imdLookup[0xA5] = (InstructionMetaData){"LDA", ZEROPAGE, 2, 3};
+    imdLookup[0xB5] = (InstructionMetaData){"LDA", ZEROPAGE_X, 2, 4};
+    imdLookup[0xAD] = (InstructionMetaData){"LDA", ABSOLUTE, 3, 4};
+    imdLookup[0xBD] = (InstructionMetaData){"LDA", ABSOLUTE_X, 3, 4};
+    imdLookup[0xB9] = (InstructionMetaData){"LDA", ABSOLUTE_Y, 3, 4};
+    imdLookup[0xA1] = (InstructionMetaData){"LDA", X_INDIRECT, 2, 6};
+    imdLookup[0xB1] = (InstructionMetaData){"LDA", INDIRECT_Y, 2, 5};
+
 
     imdLookup[0x85] = (InstructionMetaData){"STA", ZEROPAGE, 2, 3};
+    imdLookup[0x95] = (InstructionMetaData){"STA", ZEROPAGE_X, 2, 4};
+    imdLookup[0x8D] = (InstructionMetaData){"STA", ABSOLUTE, 3, 4};
 
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
@@ -221,10 +230,36 @@ void TYA() {
 void LDA(Instruction instruction) { 
     if (instruction.addressingMode == IMMEDIATE) { // A9
         regs.A = instruction.operand.lowByte;
-    }else if (instruction.addressingMode == ZEROPAGE) { // A5
+    } else if (instruction.addressingMode == ZEROPAGE) { // A5
         regs.A = memory.ram[instruction.operand.lowByte];
+    } else if (instruction.addressingMode == ZEROPAGE_X) { // B5
+        u8 src = instruction.operand.lowByte + regs.X;
+        regs.A = memory.ram[src];
+    } else if (instruction.addressingMode == ABSOLUTE) { // AD
+        u16 src = 0;
+        src |= instruction.operand.lowByte;
+        src |= (instruction.operand.highByte << 8);
+        regs.A = memory.ram[src];
+    } else if (instruction.addressingMode == ABSOLUTE_X) { // AD TODO: Special cycle case
+        u16 src = 0;
+        src |= instruction.operand.lowByte;
+        src |= (instruction.operand.highByte << 8);
+        src += regs.X;
+        regs.A = memory.ram[src];
+    } else if (instruction.addressingMode == ABSOLUTE_Y) { // AD TODO: Special cycle case
+        u16 src = 0;
+        src |= instruction.operand.lowByte;
+        src |= (instruction.operand.highByte << 8);
+        src += regs.Y;
+        regs.A = memory.ram[src];
+    } else if (instruction.addressingMode == X_INDIRECT) {
+        u16 lookupAddr = (memory.ram[instruction.operand.lowByte + regs.X + 1] << 8) | memory.ram[instruction.operand.lowByte + regs.X];
+        regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
+    } else if (instruction.addressingMode == INDIRECT_Y) { // AD TODO: Special cycle case
+        u16 lookupAddr = ((memory.ram[instruction.operand.lowByte + 1] << 8) | memory.ram[instruction.operand.lowByte]) + regs.Y;
+        printf("ADDRESS: %llu\n", lookupAddr);
+        regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
     }
-
 
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);
@@ -233,5 +268,13 @@ void LDA(Instruction instruction) {
 void STA(Instruction instruction) {
     if (instruction.addressingMode == ZEROPAGE) { // 85
         memory.ram[instruction.operand.lowByte] = regs.A;
+    } else if (instruction.addressingMode == ZEROPAGE_X) { // 95
+        u8 dst = instruction.operand.lowByte + regs.X;
+        memory.ram[dst] = regs.A;
+    } else if (instruction.addressingMode == ABSOLUTE) { // 8D
+        u16 dst = 0;
+        dst |= instruction.operand.lowByte;
+        dst |= (instruction.operand.highByte << 8);
+        memory.ram[dst] = regs.A;
     }
 }

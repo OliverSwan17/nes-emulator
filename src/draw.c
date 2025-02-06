@@ -79,6 +79,21 @@ void drawInstructionToExecute(Instruction instruction) {
         case ZEROPAGE:
             strcpy(mode, "ZEROPAGE");
             break;
+        case ZEROPAGE_X:
+            strcpy(mode, "ZEROPAGE_X");
+            break;
+        case ABSOLUTE_X:
+            strcpy(mode, "ABSOLUTE_X");
+            break;
+        case ABSOLUTE_Y:
+            strcpy(mode, "ABSOLUTE_Y");
+            break;
+        case X_INDIRECT:
+            strcpy(mode, "X_INDIRECT");
+            break;
+        case INDIRECT_Y:
+            strcpy(mode, "INDIRECT_Y");
+            break;
         default:
             strcpy(mode, "TO_BE_IMPLEMENTED");
             break;
