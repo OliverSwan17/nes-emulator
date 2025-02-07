@@ -232,70 +232,53 @@ void TYA() {
 }
 
 void LDA(Instruction instruction) { 
-    if (instruction.addressingMode == IMMEDIATE) { // A9
-        regs.A = instruction.operand.lowByte;
-    } else if (instruction.addressingMode == ZEROPAGE) { // A5
-        regs.A = memory.ram[instruction.operand.lowByte];
-    } else if (instruction.addressingMode == ZEROPAGE_X) { // B5
-        u8 src = instruction.operand.lowByte + regs.X;
-        regs.A = memory.ram[src];
-    } else if (instruction.addressingMode == ABSOLUTE) { // AD
-        u16 src = 0;
-        src |= instruction.operand.lowByte;
-        src |= (instruction.operand.highByte << 8);
-        regs.A = memory.ram[src];
-    } else if (instruction.addressingMode == ABSOLUTE_X) { // AD TODO: Special cycle case
-        u16 src = 0;
-        src |= instruction.operand.lowByte;
-        src |= (instruction.operand.highByte << 8);
-        src += regs.X;
-        regs.A = memory.ram[src];
-    } else if (instruction.addressingMode == ABSOLUTE_Y) { // AD TODO: Special cycle case
-        u16 src = 0;
-        src |= instruction.operand.lowByte;
-        src |= (instruction.operand.highByte << 8);
-        src += regs.Y;
-        regs.A = memory.ram[src];
-    } else if (instruction.addressingMode == X_INDIRECT) {
-        u16 lookupAddr = (memory.ram[instruction.operand.lowByte + regs.X + 1] << 8) | memory.ram[instruction.operand.lowByte + regs.X];
-        regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
-    } else if (instruction.addressingMode == INDIRECT_Y) { // AD TODO: Special cycle case
-        u16 lookupAddr = ((memory.ram[instruction.operand.lowByte + 1] << 8) | memory.ram[instruction.operand.lowByte]) + regs.Y;
-        regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
-    }
-
+    u8 lowByte = instruction.operand.lowByte;
+    u16 operand = instruction.operand.bytes;
+    AddressingMode addrMode = instruction.addressingMode;
+    u8 X = regs.X;
+    u8 Y = regs.Y;
+    
+    if (addrMode == IMMEDIATE)
+        regs.A = lowByte;
+    else if (addrMode == ZEROPAGE)
+        regs.A = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_X)
+        regs.A = READ_RAM(ZEROPAGE_X_ADDR(lowByte, X));
+    else if (addrMode == ABSOLUTE)
+        regs.A = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_X) // TODO: Special cycle case
+        regs.A = READ_RAM(ABSOLUTE_X_ADDR(operand, X));
+    else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
+        regs.A = READ_RAM(ABSOLUTE_Y_ADDR(operand, Y));
+    else if (addrMode == X_INDIRECT)
+        regs.A = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, X));
+    else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
+        regs.A = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, Y)); 
+    
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);
 }
 
 void STA(Instruction instruction) {
-    if (instruction.addressingMode == ZEROPAGE) { // 85
-        memory.ram[instruction.operand.lowByte] = regs.A;
-    } else if (instruction.addressingMode == ZEROPAGE_X) { // 95
-        u8 dst = instruction.operand.lowByte + regs.X;
-        memory.ram[dst] = regs.A;
-    } else if (instruction.addressingMode == ABSOLUTE) { // 8D
-        u16 dst = 0;
-        dst |= instruction.operand.lowByte;
-        dst |= (instruction.operand.highByte << 8);
-        memory.ram[dst] = regs.A;
-    } else if (instruction.addressingMode == ABSOLUTE_X) { // 8D
-        u16 dst = 0;
-        dst |= instruction.operand.lowByte;
-        dst |= (instruction.operand.highByte << 8);
-        dst += regs.X;
-        memory.ram[dst] = regs.A;
-    } else if (instruction.addressingMode == ABSOLUTE_Y) { // 8D
-        u16 dst = 0;
-        dst |= instruction.operand.lowByte;
-        dst |= (instruction.operand.highByte << 8);
-        dst += regs.Y;
-        memory.ram[dst] = regs.A;
-    } else if (instruction.addressingMode == X_INDIRECT) {
-        u16 lookupAddr = (memory.ram[instruction.operand.lowByte + regs.X + 1] << 8) | memory.ram[instruction.operand.lowByte + regs.X];
-        memory.ram[lookupAddr] = regs.A;
-    } else if (instruction.addressingMode == INDIRECT_Y) {
-        u16 lookupAddr = ((memory.ram[instruction.operand.lowByte + 1] << 8) | memory.ram[instruction.operand.lowByte]) + regs.Y;
-        memory.ram[lookupAddr] = regs.A;
-    }
+    u8 lowByte = instruction.operand.lowByte;
+    u16 operand = instruction.operand.bytes;
+    AddressingMode addrMode = instruction.addressingMode;
+    u8 A = regs.A;
+    u8 X = regs.X;
+    u8 Y = regs.Y;
+
+    if (addrMode == ZEROPAGE)
+        WRITE_RAM(lowByte, A);
+    else if (addrMode == ZEROPAGE_X)
+        WRITE_RAM(ZEROPAGE_X_ADDR(lowByte, X), A);
+    else if (addrMode == ABSOLUTE)
+        WRITE_RAM(operand, A);
+    else if (addrMode == ABSOLUTE_X)
+        WRITE_RAM(ABSOLUTE_X_ADDR(operand, X), A);
+    else if (addrMode == ABSOLUTE_Y) 
+        WRITE_RAM(ABSOLUTE_Y_ADDR(operand, Y), A);
+    else if (addrMode == X_INDIRECT)
+        WRITE_RAM(X_INDIRECT_ADDR(lowByte, X), A);
+    else if (addrMode == INDIRECT_Y)
+        WRITE_RAM(INDIRECT_Y_ADDR(lowByte, Y), A);
 }
