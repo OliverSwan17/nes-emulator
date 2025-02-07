@@ -48,6 +48,10 @@ void initInstructionMetaData() {
     imdLookup[0x85] = (InstructionMetaData){"STA", ZEROPAGE, 2, 3};
     imdLookup[0x95] = (InstructionMetaData){"STA", ZEROPAGE_X, 2, 4};
     imdLookup[0x8D] = (InstructionMetaData){"STA", ABSOLUTE, 3, 4};
+    imdLookup[0x9D] = (InstructionMetaData){"STA", ABSOLUTE_X, 3, 5};
+    imdLookup[0x99] = (InstructionMetaData){"STA", ABSOLUTE_Y, 3, 5};
+    imdLookup[0x81] = (InstructionMetaData){"STA", X_INDIRECT, 2, 6};
+    imdLookup[0x91] = (InstructionMetaData){"STA", INDIRECT_Y, 2, 6};
 
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
@@ -257,7 +261,6 @@ void LDA(Instruction instruction) {
         regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
     } else if (instruction.addressingMode == INDIRECT_Y) { // AD TODO: Special cycle case
         u16 lookupAddr = ((memory.ram[instruction.operand.lowByte + 1] << 8) | memory.ram[instruction.operand.lowByte]) + regs.Y;
-        printf("ADDRESS: %llu\n", lookupAddr);
         regs.A = (memory.ram[lookupAddr + 1] << 8) | memory.ram[lookupAddr];
     }
 
@@ -276,5 +279,23 @@ void STA(Instruction instruction) {
         dst |= instruction.operand.lowByte;
         dst |= (instruction.operand.highByte << 8);
         memory.ram[dst] = regs.A;
+    } else if (instruction.addressingMode == ABSOLUTE_X) { // 8D
+        u16 dst = 0;
+        dst |= instruction.operand.lowByte;
+        dst |= (instruction.operand.highByte << 8);
+        dst += regs.X;
+        memory.ram[dst] = regs.A;
+    } else if (instruction.addressingMode == ABSOLUTE_Y) { // 8D
+        u16 dst = 0;
+        dst |= instruction.operand.lowByte;
+        dst |= (instruction.operand.highByte << 8);
+        dst += regs.Y;
+        memory.ram[dst] = regs.A;
+    } else if (instruction.addressingMode == X_INDIRECT) {
+        u16 lookupAddr = (memory.ram[instruction.operand.lowByte + regs.X + 1] << 8) | memory.ram[instruction.operand.lowByte + regs.X];
+        memory.ram[lookupAddr] = regs.A;
+    } else if (instruction.addressingMode == INDIRECT_Y) {
+        u16 lookupAddr = ((memory.ram[instruction.operand.lowByte + 1] << 8) | memory.ram[instruction.operand.lowByte]) + regs.Y;
+        memory.ram[lookupAddr] = regs.A;
     }
 }
