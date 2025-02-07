@@ -95,13 +95,3 @@ Instruction identifyInstruction(u8 *binary);
 void powerUp();
 
 // Macros
-#define UPDATE_Z_FLAG(value) \
-    do { \
-        regs.SR.Z = ((value) == 0) ? 1 : 0; \
-    } while (0)
-
-#define UPDATE_N_FLAG(value) \
-    do { \
-        regs.SR.N = ((value) >> 7) ? 1 : 0; \
-    } while (0)
-

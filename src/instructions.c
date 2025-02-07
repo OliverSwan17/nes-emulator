@@ -53,6 +53,14 @@ void initInstructionMetaData() {
     imdLookup[0x81] = (InstructionMetaData){"STA", X_INDIRECT, 2, 6};
     imdLookup[0x91] = (InstructionMetaData){"STA", INDIRECT_Y, 2, 6};
 
+    imdLookup[0xE0] = (InstructionMetaData){"CPX", IMMEDIATE, 2, 2};
+    imdLookup[0xE4] = (InstructionMetaData){"CPX", ZEROPAGE, 2, 3};
+    imdLookup[0xEC] = (InstructionMetaData){"CPX", ABSOLUTE, 3, 4};
+
+    imdLookup[0xC0] = (InstructionMetaData){"CPY", IMMEDIATE, 2, 2};
+    imdLookup[0xC4] = (InstructionMetaData){"CPY", ZEROPAGE, 2, 3};
+    imdLookup[0xCC] = (InstructionMetaData){"CPY", ABSOLUTE, 3, 4};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 }
@@ -112,6 +120,13 @@ void executeInstruction(Instruction instruction) {
         LDA(instruction);
     if (strcmp(instruction.mnemonic, "STA") == 0)
         STA(instruction);
+
+    if (strcmp(instruction.mnemonic, "CPX") == 0)
+        CPX(instruction);
+    
+    if (strcmp(instruction.mnemonic, "CPY") == 0)
+        CPY(instruction);
+
 }
 
 void NOP() {
@@ -281,4 +296,40 @@ void STA(Instruction instruction) {
         WRITE_RAM(X_INDIRECT_ADDR(lowByte, X), A);
     else if (addrMode == INDIRECT_Y)
         WRITE_RAM(INDIRECT_Y_ADDR(lowByte, Y), A);
+}
+
+void CPX(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u8 M;
+    u8 X = regs.X;
+    
+    if (addrMode == IMMEDIATE)
+        M = instruction.operand.lowByte;
+    else if (addrMode == ZEROPAGE)
+        M = READ_RAM(instruction.operand.lowByte);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(instruction.operand.bytes);
+    
+    
+    regs.SR.C = (X >= M) ? 1: 0;
+    UPDATE_Z_FLAG(X - M);
+    UPDATE_N_FLAG(M);
+}
+
+void CPY(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u8 M;
+    u8 Y = regs.Y;
+    
+    if (addrMode == IMMEDIATE)
+        M = instruction.operand.lowByte;
+    else if (addrMode == ZEROPAGE)
+        M = READ_RAM(instruction.operand.lowByte);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(instruction.operand.bytes);
+    
+    
+    regs.SR.C = (Y >= M) ? 1: 0;
+    UPDATE_Z_FLAG(Y - M);
+    UPDATE_N_FLAG(M);
 }

@@ -16,6 +16,15 @@
 #define INDIRECT_Y_ADDR(lowByte, Y) \
     (((memory.ram[lowByte + 1] << 8) | memory.ram[lowByte]) + Y)
 
+
+
+#define UPDATE_Z_FLAG(value) (regs.SR.Z = ((value) == 0))
+#define UPDATE_N_FLAG(value) (regs.SR.N = ((value) >> 7))
+#define UPDATE_C_FLAG(value) (regs.SR.C) = ((value))
+
+
+
+
 void executeInstruction(Instruction instruction);
 
 void NOP();
@@ -49,3 +58,6 @@ void TYA();
 
 void LDA(Instruction instruction);
 void STA(Instruction instruction);
+
+void CPX(Instruction instruction);
+void CPY(Instruction instruction);
