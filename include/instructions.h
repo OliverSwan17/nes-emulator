@@ -34,7 +34,6 @@ void INY();
 void DEX();
 void DEY();
 
-
 void SEC();
 void SED();
 void SEI();
@@ -61,3 +60,5 @@ void STA(Instruction instruction);
 
 void CPX(Instruction instruction);
 void CPY(Instruction instruction);
+
+void INC(Instruction instruction);

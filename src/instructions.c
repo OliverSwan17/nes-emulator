@@ -61,9 +61,14 @@ void initInstructionMetaData() {
     imdLookup[0xC4] = (InstructionMetaData){"CPY", ZEROPAGE, 2, 3};
     imdLookup[0xCC] = (InstructionMetaData){"CPY", ABSOLUTE, 3, 4};
 
+    imdLookup[0xE6] = (InstructionMetaData){"INC", ZEROPAGE, 2, 5};
+    imdLookup[0xF6] = (InstructionMetaData){"INC", ZEROPAGE_X, 2, 6};
+    imdLookup[0xEE] = (InstructionMetaData){"INC", ABSOLUTE, 3, 6};
+    imdLookup[0xFE] = (InstructionMetaData){"INC", ABSOLUTE_X, 3, 7};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
-}
+} // imdLookup[0x] = (InstructionMetaData){"", , , };
 
 void executeInstruction(Instruction instruction) {
     if (strcmp(instruction.mnemonic, "NOP") == 0)
@@ -126,6 +131,9 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "CPY") == 0)
         CPY(instruction);
+    
+    if (strcmp(instruction.mnemonic, "INC") == 0)
+        INC(instruction);
 
 }
 
@@ -332,4 +340,24 @@ void CPY(Instruction instruction) {
     regs.SR.C = (Y >= M) ? 1: 0;
     UPDATE_Z_FLAG(Y - M);
     UPDATE_N_FLAG(M);
+}
+
+void INC(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 addr;
+
+    if (addrMode == ZEROPAGE)
+        addr = instruction.operand.lowByte;
+    else if (addrMode == ZEROPAGE_X)
+        addr = instruction.operand.lowByte + regs.X;
+    else if (addrMode == ABSOLUTE)
+        addr = instruction.operand.bytes;
+    else if (addrMode == ABSOLUTE_X)
+        addr = instruction.operand.bytes + regs.X;
+
+    memory.ram[addr]++;
+    u8 result = memory.ram[addr];
+    
+    UPDATE_Z_FLAG(result);
+    UPDATE_N_FLAG(result);
 }
