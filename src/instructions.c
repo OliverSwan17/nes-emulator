@@ -66,6 +66,15 @@ void initInstructionMetaData() {
     imdLookup[0xEE] = (InstructionMetaData){"INC", ABSOLUTE, 3, 6};
     imdLookup[0xFE] = (InstructionMetaData){"INC", ABSOLUTE_X, 3, 7};
 
+    imdLookup[0x29] = (InstructionMetaData){"AND", IMMEDIATE, 2, 2};
+    imdLookup[0x25] = (InstructionMetaData){"AND", ZEROPAGE, 2, 3};
+    imdLookup[0x35] = (InstructionMetaData){"AND", ZEROPAGE_X, 2, 4};
+    imdLookup[0x2D] = (InstructionMetaData){"AND", ABSOLUTE, 3, 4};
+    imdLookup[0x3D] = (InstructionMetaData){"AND", ABSOLUTE_X, 3, 4};
+    imdLookup[0x39] = (InstructionMetaData){"AND", ABSOLUTE_Y, 3, 4};
+    imdLookup[0x21] = (InstructionMetaData){"AND", X_INDIRECT, 2, 6};
+    imdLookup[0x31] = (InstructionMetaData){"AND", INDIRECT_Y, 2, 5};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -134,6 +143,9 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "INC") == 0)
         INC(instruction);
+    
+    if (strcmp(instruction.mnemonic, "AND") == 0)
+        AND(instruction);
 
 }
 
@@ -361,3 +373,36 @@ void INC(Instruction instruction) {
     UPDATE_Z_FLAG(result);
     UPDATE_N_FLAG(result);
 }
+
+void AND(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+    u16 addr;
+
+    if (addrMode == IMMEDIATE) {
+        regs.A &= lowByte;
+        return;
+    }
+
+    if (addrMode == ZEROPAGE)
+        addr = lowByte;
+    else if (addrMode == ZEROPAGE_X)
+        addr = ZEROPAGE_X_ADDR(lowByte, regs.X);
+    else if (addrMode == ABSOLUTE)
+        addr = operand;
+    else if (addrMode == ABSOLUTE_X)
+        addr = ABSOLUTE_X_ADDR(operand, regs.X);
+    else if (addrMode == ABSOLUTE_Y)
+        addr = ABSOLUTE_Y_ADDR(operand, regs.Y);
+    else if (addrMode == X_INDIRECT)
+        addr = X_INDIRECT_ADDR(lowByte, regs.X);
+    else if (addrMode == INDIRECT_Y)
+        addr = INDIRECT_Y_ADDR(lowByte, regs.Y);
+    
+    regs.A &= READ_RAM(addr);
+
+    UPDATE_Z_FLAG(regs.A);
+    UPDATE_N_FLAG(regs.A);
+}
+

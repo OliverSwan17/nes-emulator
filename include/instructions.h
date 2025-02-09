@@ -62,3 +62,5 @@ void CPX(Instruction instruction);
 void CPY(Instruction instruction);
 
 void INC(Instruction instruction);
+
+void AND(Instruction instruction);
