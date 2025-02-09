@@ -145,7 +145,7 @@ void executeInstruction(Instruction instruction) {
         INC(instruction);
     
     if (strcmp(instruction.mnemonic, "AND") == 0)
-        AND(instruction);
+        Bitwise(instruction);
 
 }
 
@@ -374,14 +374,24 @@ void INC(Instruction instruction) {
     UPDATE_N_FLAG(result);
 }
 
-void AND(Instruction instruction) {
+void Bitwise(Instruction instruction) {
     AddressingMode addrMode = instruction.addressingMode;
     u16 operand = instruction.operand.bytes;
     u8 lowByte = instruction.operand.lowByte;
-    u16 addr;
+    u16 addr = 0;
+    u8 value = 0;
+    char *mnemonic = instruction.mnemonic;
 
     if (addrMode == IMMEDIATE) {
-        regs.A &= lowByte;
+        if (strcmp(mnemonic, "AND") == 0)
+            regs.A &= lowByte;
+        else if (strcmp(mnemonic, "ORA") == 0)
+            regs.A |= lowByte;
+        else if (strcmp(mnemonic, "EOR") == 0)
+            regs.A ^= lowByte;
+
+        UPDATE_Z_FLAG(regs.A);
+        UPDATE_N_FLAG(regs.A);
         return;
     }
 
@@ -399,10 +409,16 @@ void AND(Instruction instruction) {
         addr = X_INDIRECT_ADDR(lowByte, regs.X);
     else if (addrMode == INDIRECT_Y)
         addr = INDIRECT_Y_ADDR(lowByte, regs.Y);
-    
-    regs.A &= READ_RAM(addr);
 
+    value = READ_RAM(addr);
+
+    if (strcmp(mnemonic, "AND") == 0)
+        regs.A &= value;
+    else if (strcmp(mnemonic, "ORA") == 0)
+        regs.A |= value;
+    else if (strcmp(mnemonic, "EOR") == 0)
+        regs.A ^= value;
+    
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);
 }
-
