@@ -75,6 +75,24 @@ void initInstructionMetaData() {
     imdLookup[0x21] = (InstructionMetaData){"AND", X_INDIRECT, 2, 6};
     imdLookup[0x31] = (InstructionMetaData){"AND", INDIRECT_Y, 2, 5};
 
+    imdLookup[0x09] = (InstructionMetaData){"ORA", IMMEDIATE, 2, 2};
+    imdLookup[0x05] = (InstructionMetaData){"ORA", ZEROPAGE, 2, 3};
+    imdLookup[0x15] = (InstructionMetaData){"ORA", ZEROPAGE_X, 2, 4};
+    imdLookup[0x0D] = (InstructionMetaData){"ORA", ABSOLUTE, 3, 4};
+    imdLookup[0x1D] = (InstructionMetaData){"ORA", ABSOLUTE_X, 3, 4};
+    imdLookup[0x19] = (InstructionMetaData){"ORA", ABSOLUTE_Y, 3, 4};
+    imdLookup[0x01] = (InstructionMetaData){"ORA", X_INDIRECT, 2, 6};
+    imdLookup[0x11] = (InstructionMetaData){"ORA", INDIRECT_Y, 2, 5};
+
+    imdLookup[0x49] = (InstructionMetaData){"EOR", IMMEDIATE, 2, 2};
+    imdLookup[0x45] = (InstructionMetaData){"EOR", ZEROPAGE, 2, 3};
+    imdLookup[0x55] = (InstructionMetaData){"EOR", ZEROPAGE_X, 2, 4};
+    imdLookup[0x4D] = (InstructionMetaData){"EOR", ABSOLUTE, 3, 4};
+    imdLookup[0x5D] = (InstructionMetaData){"EOR", ABSOLUTE_X, 3, 4};
+    imdLookup[0x59] = (InstructionMetaData){"EOR", ABSOLUTE_Y, 3, 4};
+    imdLookup[0x41] = (InstructionMetaData){"EOR", X_INDIRECT, 2, 6};
+    imdLookup[0x51] = (InstructionMetaData){"EOR", INDIRECT_Y, 2, 5};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -145,7 +163,11 @@ void executeInstruction(Instruction instruction) {
         INC(instruction);
     
     if (strcmp(instruction.mnemonic, "AND") == 0)
-        Bitwise(instruction);
+        AND(instruction);
+    if (strcmp(instruction.mnemonic, "ORA") == 0)
+        ORA(instruction);
+    if (strcmp(instruction.mnemonic, "EOR") == 0)
+        EOR(instruction);
 
 }
 
@@ -372,6 +394,18 @@ void INC(Instruction instruction) {
     
     UPDATE_Z_FLAG(result);
     UPDATE_N_FLAG(result);
+}
+
+void AND(Instruction instruction) {
+    Bitwise(instruction);
+}
+
+void ORA(Instruction instruction) {
+    Bitwise(instruction);
+}
+
+void EOR(Instruction instruction) {
+    Bitwise(instruction);
 }
 
 void Bitwise(Instruction instruction) {

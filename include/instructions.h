@@ -63,4 +63,9 @@ void CPY(Instruction instruction);
 
 void INC(Instruction instruction);
 
+
+void AND(Instruction instruction);
+void ORA(Instruction instruction);
+void EOR(Instruction instruction);
+
 void Bitwise(Instruction instruction);
