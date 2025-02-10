@@ -137,6 +137,9 @@ void initInstructionMetaData() {
     imdLookup[0x6E] = (InstructionMetaData){"ROR", ABSOLUTE, 3, 6};
     imdLookup[0x7E] = (InstructionMetaData){"ROR", ABSOLUTE_X, 3, 7};
 
+    imdLookup[0x4C] = (InstructionMetaData){"JMP", ABSOLUTE, 3, 3};
+    imdLookup[0x6C] = (InstructionMetaData){"JMP", INDIRECT, 3, 5};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -231,6 +234,9 @@ void executeInstruction(Instruction instruction) {
         STX(instruction);
     if (strcmp(instruction.mnemonic, "STY") == 0)
         STY(instruction);
+    
+    if (strcmp(instruction.mnemonic, "JMP") == 0)
+        JMP(instruction);
 
 }
 
@@ -650,7 +656,7 @@ void STY(Instruction instruction) {
     else if (addrMode == ZEROPAGE_X)
         WRITE_RAM(lowByte + regs.X, regs.Y);
     else if (addrMode == ABSOLUTE)
-        WRITE_RAM(instruction.operand.bytes, regs.Y);
+        WRITE_RAM(operand, regs.Y);
 }
 
 void ROL(Instruction instruction) {
@@ -721,4 +727,21 @@ void ROR(Instruction instruction) {
     regs.SR.C = value & 0b1;
     UPDATE_Z_FLAG(result);
     UPDATE_N_FLAG(result);
+}
+
+void JMP(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+
+    if (addrMode == ABSOLUTE)
+        regs.PC = operand;
+    else if (addrMode == INDIRECT) { // Special case for 6502 JMP bug
+        if (instruction.operand.lowByte == 0xFF) { 
+            u16 llAdr = operand;
+            u16 hhAdr = operand &~ 0xFF;
+            regs.PC = (READ_RAM(llAdr)) | (READ_RAM(hhAdr) << 8);
+        } else {
+            regs.PC = READ_LLHH_RAM(operand);
+        }
+    }
 }

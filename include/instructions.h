@@ -1,21 +1,21 @@
 #pragma once
 #include "6502.h"
 
-#define READ_LLHH_RAM(llAdr) ((memory.ram[llAdr + 1] << 8) | memory.ram[llAdr])
-#define READ_RAM(addr) (memory.ram[addr])
-#define WRITE_RAM(addr, val) (memory.ram[addr] = val)
+#define READ_LLHH_RAM(llAdr) ((memory.ram[(llAdr) + 1] << 8) | memory.ram[(llAdr)])
+#define READ_RAM(addr) (memory.ram[(addr)])
+#define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))
 
 #define ZEROPAGE_X_ADDR(lowByte, X) ((lowByte) + (X))
 #define ZEROPAGE_Y_ADDR(lowByte, Y) ((lowByte) + (Y))
 #define ABSOLUTE_ADDR(lowByte, highByte) ((highByte << 8) | lowByte)
-#define ABSOLUTE_X_ADDR(operand, X) (operand + X)
-#define ABSOLUTE_Y_ADDR(operand, Y) (operand + Y)
+#define ABSOLUTE_X_ADDR(operand, X) ((operand) + (X))
+#define ABSOLUTE_Y_ADDR(operand, Y) ((operand) + (Y))
 
 #define X_INDIRECT_ADDR(lowByte, X) \
-    ((memory.ram[lowByte + X + 1] << 8) | (memory.ram[(lowByte) + (X)]))
+    ((memory.ram[(lowByte) + (X) + 1] << 8) | (memory.ram[(lowByte) + (X)]))
 
 #define INDIRECT_Y_ADDR(lowByte, Y) \
-    (((memory.ram[lowByte + 1] << 8) | memory.ram[lowByte]) + Y)
+    (((memory.ram[(lowByte) + 1] << 8) | memory.ram[(lowByte)]) + Y)
 
 
 
@@ -51,15 +51,12 @@ void TSX();
 void TXA();
 void TXS();
 void TYA();
-
 void LDA(Instruction);
 void STA(Instruction);
 void LDX(Instruction);
 void LDY(Instruction);
 void STX(Instruction);
 void STY(Instruction);
-
-
 void CPX(Instruction);
 void CPY(Instruction);
 void INC(Instruction);
@@ -70,3 +67,4 @@ void ASL(Instruction);
 void LSR(Instruction);
 void ROL(Instruction);
 void ROR(Instruction);
+void JMP(Instruction instruction);

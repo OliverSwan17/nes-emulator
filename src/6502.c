@@ -130,7 +130,7 @@ void powerUp() {
     */
    
     // Testing ROL and ROR
-    u8 code[] = {0xA9, 0xFF, 0x2A, 0xA9, 0x00, 0x2A, 0xA9, 0x01, 0x6A, 0x22};
+    //u8 code[] = {0xA9, 0xFF, 0x2A, 0xA9, 0x00, 0x2A, 0xA9, 0x01, 0x6A, 0x22};
     /*
     LDA #$FF
     ROL A
@@ -138,7 +138,20 @@ void powerUp() {
     ROL A
     LDA #$01
     ROR
-*/
+    */
+
+    // Testing JMP
+    //u8 code[] = {0x4C, 0x21, 0x17, 0x22}; // Absolute
+    u8 code[] = {0xA9, 0x65, 0x8D, 0xFF, 0x01, 0xA9, 0x19, 0x8D, 0x00, 0x01, 0xA9, 0x01, 0x8D, 0x00, 0x02, 0x6C, 0xFF, 0x01, 0x22}; // Indirect
+    /*
+    LDA #$65
+    STA $1FF
+    LDA #$19
+    STA $100
+    LDA #$01
+    STA $200
+    JMP ($1FF)
+    */
 
     memcpy(memory.program, code, sizeof(code));
 
@@ -151,7 +164,7 @@ void powerUp() {
         drawText(instruction);
         executeInstruction(instruction); // Execute
 
-        if (strcmp(instruction.mnemonic, "JSR") != 0 && strcmp(instruction.mnemonic, "RTS") != 0) // Add other branch and jumps in the future
+        if (strcmp(instruction.mnemonic, "JSR") != 0 && strcmp(instruction.mnemonic, "RTS") != 0 && strcmp(instruction.mnemonic, "JMP") != 0) // Add other branch and jumps in the future
             regs.PC += instruction.bytes;
     }
 
