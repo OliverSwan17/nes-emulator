@@ -68,3 +68,5 @@ void ORA(Instruction);
 void EOR(Instruction);
 void ASL(Instruction);
 void LSR(Instruction);
+void ROL(Instruction);
+void ROR(Instruction);

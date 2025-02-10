@@ -125,6 +125,18 @@ void initInstructionMetaData() {
     imdLookup[0x94] = (InstructionMetaData){"STY", ZEROPAGE_X, 2, 4};
     imdLookup[0x8C] = (InstructionMetaData){"STY", ABSOLUTE, 3, 4};
 
+    imdLookup[0x2A] = (InstructionMetaData){"ROL", ACCUMULATOR, 1, 2};
+    imdLookup[0x26] = (InstructionMetaData){"ROL", ZEROPAGE, 2, 5};
+    imdLookup[0x36] = (InstructionMetaData){"ROL", ZEROPAGE_X, 2, 6};
+    imdLookup[0x2E] = (InstructionMetaData){"ROL", ABSOLUTE, 3, 6};
+    imdLookup[0x3E] = (InstructionMetaData){"ROL", ABSOLUTE_X, 3, 7};
+
+    imdLookup[0x6A] = (InstructionMetaData){"ROR", ACCUMULATOR, 1, 2};
+    imdLookup[0x66] = (InstructionMetaData){"ROR", ZEROPAGE, 2, 5};
+    imdLookup[0x76] = (InstructionMetaData){"ROR", ZEROPAGE_X, 2, 6};
+    imdLookup[0x6E] = (InstructionMetaData){"ROR", ABSOLUTE, 3, 6};
+    imdLookup[0x7E] = (InstructionMetaData){"ROR", ABSOLUTE_X, 3, 7};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -210,7 +222,11 @@ void executeInstruction(Instruction instruction) {
         ASL(instruction);
     if (strcmp(instruction.mnemonic, "LSR") == 0)
         LSR(instruction);
-    
+    if (strcmp(instruction.mnemonic, "ROL") == 0)
+        ROL(instruction);
+    if (strcmp(instruction.mnemonic, "ROR") == 0)
+        ROR(instruction);
+
     if (strcmp(instruction.mnemonic, "STX") == 0)
         STX(instruction);
     if (strcmp(instruction.mnemonic, "STY") == 0)
@@ -635,4 +651,74 @@ void STY(Instruction instruction) {
         WRITE_RAM(lowByte + regs.X, regs.Y);
     else if (addrMode == ABSOLUTE)
         WRITE_RAM(instruction.operand.bytes, regs.Y);
+}
+
+void ROL(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+
+    u8 value = 0;
+    u8 result = 0;
+    u16 effAddr = 0;
+
+    if (addrMode == ACCUMULATOR) 
+        value = regs.A;
+    else if (addrMode == ZEROPAGE)
+        effAddr = lowByte;
+    else if (addrMode == ZEROPAGE_X)
+        effAddr = lowByte + regs.X;
+    else if (addrMode == ABSOLUTE)
+        effAddr = operand;
+    else if (addrMode == ABSOLUTE_X)
+        effAddr = operand + regs.X;
+    
+    if (addrMode != ACCUMULATOR)
+        value = READ_RAM(effAddr);
+
+    result = (value << 1) | (regs.SR.C);
+
+    if (addrMode == ACCUMULATOR)
+        regs.A = result;
+    else
+        WRITE_RAM(effAddr, result);
+
+    regs.SR.C = (value >> 7);
+    UPDATE_Z_FLAG(result);
+    UPDATE_N_FLAG(result);
+}
+
+void ROR(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+
+    u8 value = 0;
+    u8 result = 0;
+    u16 effAddr = 0;
+
+    if (addrMode == ACCUMULATOR) 
+        value = regs.A;
+    else if (addrMode == ZEROPAGE)
+        effAddr = lowByte;
+    else if (addrMode == ZEROPAGE_X)
+        effAddr = lowByte + regs.X;
+    else if (addrMode == ABSOLUTE)
+        effAddr = operand;
+    else if (addrMode == ABSOLUTE_X)
+        effAddr = operand + regs.X;
+    
+    if (addrMode != ACCUMULATOR)
+        value = READ_RAM(effAddr);
+
+    result = (value >> 1) | (regs.SR.C << 7);
+
+    if (addrMode == ACCUMULATOR)
+        regs.A = result;
+    else
+        WRITE_RAM(effAddr, result);
+
+    regs.SR.C = value & 0b1;
+    UPDATE_Z_FLAG(result);
+    UPDATE_N_FLAG(result);
 }
