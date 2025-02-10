@@ -26,8 +26,8 @@
 
 
 
-void executeInstruction(Instruction instruction);
-void Bitwise(Instruction instruction);
+void executeInstruction(Instruction);
+void Bitwise(Instruction);
 
 void NOP();
 void INX();
@@ -41,7 +41,7 @@ void CLC();
 void CLD();
 void CLI();
 void CLV();
-void JSR(Instruction instruction);
+void JSR(Instruction);
 void RTS();
 void PHA();
 void PLA();
@@ -51,15 +51,20 @@ void TSX();
 void TXA();
 void TXS();
 void TYA();
-void LDA(Instruction instruction);
-void STA(Instruction instruction);
-void CPX(Instruction instruction);
-void CPY(Instruction instruction);
-void INC(Instruction instruction);
-void AND(Instruction instruction);
-void ORA(Instruction instruction);
-void EOR(Instruction instruction);
-void LDX(Instruction instruction);
-void LDY(Instruction Instruction);
-void ASL(Instruction Instruction);
-void LSR(Instruction instruction);
+
+void LDA(Instruction);
+void STA(Instruction);
+void LDX(Instruction);
+void LDY(Instruction);
+void STX(Instruction);
+void STY(Instruction);
+
+
+void CPX(Instruction);
+void CPY(Instruction);
+void INC(Instruction);
+void AND(Instruction);
+void ORA(Instruction);
+void EOR(Instruction);
+void ASL(Instruction);
+void LSR(Instruction);

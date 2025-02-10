@@ -117,6 +117,14 @@ void initInstructionMetaData() {
     imdLookup[0x4E] = (InstructionMetaData){"LSR", ABSOLUTE, 3, 6};
     imdLookup[0x5E] = (InstructionMetaData){"LSR", ABSOLUTE_X, 3, 7};
 
+    imdLookup[0x86] = (InstructionMetaData){"STX", ZEROPAGE, 2, 3};
+    imdLookup[0x96] = (InstructionMetaData){"STX", ZEROPAGE_Y, 2, 4};
+    imdLookup[0x8E] = (InstructionMetaData){"STX", ABSOLUTE, 3, 4};
+
+    imdLookup[0x84] = (InstructionMetaData){"STY", ZEROPAGE, 2, 3};
+    imdLookup[0x94] = (InstructionMetaData){"STY", ZEROPAGE_X, 2, 4};
+    imdLookup[0x8C] = (InstructionMetaData){"STY", ABSOLUTE, 3, 4};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -202,6 +210,11 @@ void executeInstruction(Instruction instruction) {
         ASL(instruction);
     if (strcmp(instruction.mnemonic, "LSR") == 0)
         LSR(instruction);
+    
+    if (strcmp(instruction.mnemonic, "STX") == 0)
+        STX(instruction);
+    if (strcmp(instruction.mnemonic, "STY") == 0)
+        STY(instruction);
 
 }
 
@@ -597,4 +610,29 @@ void LSR(Instruction instruction) {
     regs.SR.C = value & 0b1;
     UPDATE_Z_FLAG(result);
     regs.SR.N = 0;
+}
+
+void STX(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u8 lowByte = instruction.operand.lowByte;
+
+    if (addrMode == ZEROPAGE)
+        WRITE_RAM(lowByte, regs.X);
+    else if (addrMode == ZEROPAGE_Y)
+        WRITE_RAM(lowByte + regs.Y, regs.X);
+    else if (addrMode == ABSOLUTE)
+        WRITE_RAM(instruction.operand.bytes, regs.X);
+}
+
+void STY(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+
+    if (addrMode == ZEROPAGE)
+        WRITE_RAM(lowByte, regs.Y);
+    else if (addrMode == ZEROPAGE_X)
+        WRITE_RAM(lowByte + regs.X, regs.Y);
+    else if (addrMode == ABSOLUTE)
+        WRITE_RAM(instruction.operand.bytes, regs.Y);
 }
