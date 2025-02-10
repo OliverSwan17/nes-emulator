@@ -93,6 +93,25 @@ void initInstructionMetaData() {
     imdLookup[0x41] = (InstructionMetaData){"EOR", X_INDIRECT, 2, 6};
     imdLookup[0x51] = (InstructionMetaData){"EOR", INDIRECT_Y, 2, 5};
 
+    imdLookup[0xA2] = (InstructionMetaData){"LDX", IMMEDIATE, 2, 2};
+    imdLookup[0xA6] = (InstructionMetaData){"LDX", ZEROPAGE, 2, 3};
+    imdLookup[0xB6] = (InstructionMetaData){"LDX", ZEROPAGE_Y, 2, 4};
+    imdLookup[0xAE] = (InstructionMetaData){"LDX", ABSOLUTE, 3, 4};
+    imdLookup[0xBE] = (InstructionMetaData){"LDX", ABSOLUTE_Y, 3, 4};
+
+    imdLookup[0xA0] = (InstructionMetaData){"LDY", IMMEDIATE, 2, 2};
+    imdLookup[0xA4] = (InstructionMetaData){"LDY", ZEROPAGE, 2, 3};
+    imdLookup[0xB4] = (InstructionMetaData){"LDY", ZEROPAGE_X, 2, 4};
+    imdLookup[0xAC] = (InstructionMetaData){"LDY", ABSOLUTE, 3, 4};
+    imdLookup[0xBC] = (InstructionMetaData){"LDY", ABSOLUTE_X, 3, 4};
+
+    imdLookup[0x0A] = (InstructionMetaData){"ASL", ACCUMULATOR, 1, 2};
+    imdLookup[0x06] = (InstructionMetaData){"ASL", ZEROPAGE, 2, 5};
+    imdLookup[0x16] = (InstructionMetaData){"ASL", ZEROPAGE_X, 2, 6};
+    imdLookup[0x0E] = (InstructionMetaData){"ASL", ABSOLUTE, 3, 6};
+    imdLookup[0x1E] = (InstructionMetaData){"ASL", ABSOLUTE_X, 3, 7};
+
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -168,6 +187,14 @@ void executeInstruction(Instruction instruction) {
         ORA(instruction);
     if (strcmp(instruction.mnemonic, "EOR") == 0)
         EOR(instruction);
+    
+    if (strcmp(instruction.mnemonic, "LDX") == 0)
+        LDX(instruction);
+    if (strcmp(instruction.mnemonic, "LDY") == 0)
+        LDY(instruction);
+    
+    if (strcmp(instruction.mnemonic, "ASL") == 0)
+        ASL(instruction);
 
 }
 
@@ -455,4 +482,78 @@ void Bitwise(Instruction instruction) {
     
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);
+}
+
+void LDX(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+
+    if (addrMode == IMMEDIATE)
+        regs.X = lowByte;
+    else if (addrMode == ZEROPAGE)
+        regs.X = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_Y)
+        regs.X = READ_RAM(ZEROPAGE_Y_ADDR(lowByte, regs.Y));
+    else if (addrMode == ABSOLUTE)
+        regs.X = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_Y)
+        regs.X = READ_RAM(ABSOLUTE_Y_ADDR(operand, regs.Y));
+
+    UPDATE_Z_FLAG(regs.X);
+    UPDATE_N_FLAG(regs.X);
+}
+
+void LDY(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+
+    if (addrMode == IMMEDIATE)
+        regs.Y = lowByte;
+    else if (addrMode == ZEROPAGE)
+        regs.Y = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_X)
+        regs.Y = READ_RAM(ZEROPAGE_X_ADDR(lowByte, regs.X));
+    else if (addrMode == ABSOLUTE)
+        regs.Y = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_X)
+        regs.Y = READ_RAM(ABSOLUTE_X_ADDR(operand, regs.X));
+
+    UPDATE_Z_FLAG(regs.X);
+    UPDATE_N_FLAG(regs.X);
+}
+
+void ASL(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+    u8 value = 0;
+    u16 effAddr= 0;
+
+    if (addrMode == ACCUMULATOR)
+        value = regs.A;
+    else {
+        if (addrMode == ZEROPAGE)
+            effAddr = lowByte;
+        else if (addrMode == ZEROPAGE_X)
+            effAddr = lowByte + regs.X;
+        else if (addrMode == ABSOLUTE)
+            effAddr = operand;
+        else if (addrMode == ABSOLUTE_X)
+            effAddr = operand + regs.X;
+        
+        value = READ_RAM(effAddr);
+    }
+   
+    u8 result = value << 1;
+
+    if (addrMode == ACCUMULATOR)
+        regs.A = result;
+    else
+        WRITE_RAM(effAddr, result);
+
+    regs.SR.C = (value >> 7);
+    UPDATE_Z_FLAG(result);
+    UPDATE_N_FLAG(result);
 }

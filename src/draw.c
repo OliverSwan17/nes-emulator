@@ -67,20 +67,11 @@ void drawStatusBits() {
 void drawInstructionToExecute(Instruction instruction) {
     char mode[20];
     switch (instruction.addressingMode) {
-        case IMPLIED:
-            strcpy(mode, "IMPLIED");
+        case ACCUMULATOR:
+            strcpy(mode, "ACCUMULATOR");
             break;
         case ABSOLUTE:
             strcpy(mode, "ABSOLUTE");
-            break;
-        case IMMEDIATE:
-            strcpy(mode, "IMMEDIATE");
-            break;
-        case ZEROPAGE:
-            strcpy(mode, "ZEROPAGE");
-            break;
-        case ZEROPAGE_X:
-            strcpy(mode, "ZEROPAGE_X");
             break;
         case ABSOLUTE_X:
             strcpy(mode, "ABSOLUTE_X");
@@ -88,14 +79,32 @@ void drawInstructionToExecute(Instruction instruction) {
         case ABSOLUTE_Y:
             strcpy(mode, "ABSOLUTE_Y");
             break;
+        case IMMEDIATE:
+            strcpy(mode, "IMMEDIATE");
+            break;
+        case IMPLIED:
+            strcpy(mode, "IMPLIED");
+            break;
+        case INDIRECT:
+            strcpy(mode, "INDIRECT");
+            break;
         case X_INDIRECT:
             strcpy(mode, "X_INDIRECT");
             break;
         case INDIRECT_Y:
             strcpy(mode, "INDIRECT_Y");
             break;
-        default:
-            strcpy(mode, "TO_BE_IMPLEMENTED");
+        case RELATIVE:
+            strcpy(mode, "RELATIVE");
+            break;
+        case ZEROPAGE:
+            strcpy(mode, "ZEROPAGE");
+            break;
+        case ZEROPAGE_X:
+            strcpy(mode, "ZEROPAGE_X");
+            break;
+        case ZEROPAGE_Y:
+            strcpy(mode, "ZEROPAGE_X");
             break;
     }
 

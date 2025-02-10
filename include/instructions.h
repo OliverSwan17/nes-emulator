@@ -6,6 +6,7 @@
 #define WRITE_RAM(addr, val) (memory.ram[addr] = val)
 
 #define ZEROPAGE_X_ADDR(lowByte, X) ((lowByte) + (X))
+#define ZEROPAGE_Y_ADDR(lowByte, Y) ((lowByte) + (Y))
 #define ABSOLUTE_ADDR(lowByte, highByte) ((highByte << 8) | lowByte)
 #define ABSOLUTE_X_ADDR(operand, X) (operand + X)
 #define ABSOLUTE_Y_ADDR(operand, Y) (operand + Y)
@@ -26,14 +27,13 @@
 
 
 void executeInstruction(Instruction instruction);
+void Bitwise(Instruction instruction);
 
 void NOP();
-
 void INX();
 void INY();
 void DEX();
 void DEY();
-
 void SEC();
 void SED();
 void SEI();
@@ -41,31 +41,24 @@ void CLC();
 void CLD();
 void CLI();
 void CLV();
-
 void JSR(Instruction instruction);
 void RTS();
-
 void PHA();
 void PLA();
-
 void TAX();
 void TAY();
 void TSX();
 void TXA();
 void TXS();
 void TYA();
-
 void LDA(Instruction instruction);
 void STA(Instruction instruction);
-
 void CPX(Instruction instruction);
 void CPY(Instruction instruction);
-
 void INC(Instruction instruction);
-
-
 void AND(Instruction instruction);
 void ORA(Instruction instruction);
 void EOR(Instruction instruction);
-
-void Bitwise(Instruction instruction);
+void LDX(Instruction instruction);
+void LDY(Instruction Instruction);
+void ASL(Instruction Instruction);
