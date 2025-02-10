@@ -62,3 +62,4 @@ void EOR(Instruction instruction);
 void LDX(Instruction instruction);
 void LDY(Instruction Instruction);
 void ASL(Instruction Instruction);
+void LSR(Instruction instruction);
