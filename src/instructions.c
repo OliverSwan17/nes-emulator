@@ -149,6 +149,9 @@ void initInstructionMetaData() {
     imdLookup[0xC1] = (InstructionMetaData){"CMP", X_INDIRECT, 2, 6};
     imdLookup[0xD1] = (InstructionMetaData){"CMP", INDIRECT_Y, 2, 5};
 
+    imdLookup[0x24] = (InstructionMetaData){"BIT", ZEROPAGE, 2, 3};
+    imdLookup[0x2C] = (InstructionMetaData){"BIT", ABSOLUTE, 3, 4};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -250,6 +253,8 @@ void executeInstruction(Instruction instruction) {
     if (strcmp(instruction.mnemonic, "CMP") == 0)
         CMP(instruction);
 
+    if (strcmp(instruction.mnemonic, "BIT") == 0)
+        BIT(instruction);
 }
 
 void NOP() {
@@ -782,8 +787,22 @@ void CMP(Instruction instruction) {
         M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
 
     u8 result = regs.A - M;
-
     regs.SR.Z = (result == 0);
     regs.SR.N = (result >> 7);
     regs.SR.C = (regs.A >= M);
+}
+
+void BIT(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 M = 0;
+
+    if (addrMode == ZEROPAGE)
+        M = READ_RAM(instruction.operand.lowByte);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(operand);
+    
+    regs.SR.N = M >> 7;
+    regs.SR.V = (M >> 6) & 1;
+    regs.SR.Z = ((regs.A & M) == 0); 
 }

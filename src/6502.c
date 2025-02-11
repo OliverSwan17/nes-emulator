@@ -154,7 +154,16 @@ void powerUp() {
     */
 
     // Testing CMP 
-    u8 code [] = {0xA9, 0x17, 0xC9, 0x20, 0x22};
+    //u8 code [] = {0xA9, 0x17, 0xC9, 0x20, 0x22};
+
+    // Testing BIT
+    u8 code[] = {0xA9, 0xFF, 0x85, 0x25, 0xA9, 0x17, 0x24, 0x25, 0x22};
+    /*
+    LDA #$FF
+    STA $25
+    LDA #$17
+    BIT $25
+    */
 
     memcpy(memory.program, code, sizeof(code));
 
