@@ -67,4 +67,5 @@ void ASL(Instruction);
 void LSR(Instruction);
 void ROL(Instruction);
 void ROR(Instruction);
-void JMP(Instruction instruction);
+void JMP(Instruction);
+void CMP(Instruction);

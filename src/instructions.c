@@ -140,6 +140,15 @@ void initInstructionMetaData() {
     imdLookup[0x4C] = (InstructionMetaData){"JMP", ABSOLUTE, 3, 3};
     imdLookup[0x6C] = (InstructionMetaData){"JMP", INDIRECT, 3, 5};
 
+    imdLookup[0xC9] = (InstructionMetaData){"CMP", IMMEDIATE, 2, 2};
+    imdLookup[0xC5] = (InstructionMetaData){"CMP", ZEROPAGE, 2, 3};
+    imdLookup[0xD5] = (InstructionMetaData){"CMP", ZEROPAGE_X, 2, 4};
+    imdLookup[0xCD] = (InstructionMetaData){"CMP", ABSOLUTE, 3, 4};
+    imdLookup[0xDD] = (InstructionMetaData){"CMP", ABSOLUTE_X, 3, 4};
+    imdLookup[0xD9] = (InstructionMetaData){"CMP", ABSOLUTE_Y, 3, 4};
+    imdLookup[0xC1] = (InstructionMetaData){"CMP", X_INDIRECT, 2, 6};
+    imdLookup[0xD1] = (InstructionMetaData){"CMP", INDIRECT_Y, 2, 5};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -237,6 +246,9 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "JMP") == 0)
         JMP(instruction);
+    
+    if (strcmp(instruction.mnemonic, "CMP") == 0)
+        CMP(instruction);
 
 }
 
@@ -744,4 +756,34 @@ void JMP(Instruction instruction) {
             regs.PC = READ_LLHH_RAM(operand);
         }
     }
+}
+
+void CMP(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+    u8 M = 0;
+
+    if (addrMode == IMMEDIATE)
+        M = lowByte;
+    else if (addrMode == ZEROPAGE)
+        M = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_X)
+        M = READ_RAM(lowByte + regs.X);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_X) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.X);
+    else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.Y);
+    else if (addrMode == X_INDIRECT)
+        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+    else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
+        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+
+    u8 result = regs.A - M;
+
+    regs.SR.Z = (result == 0);
+    regs.SR.N = (result >> 7);
+    regs.SR.C = (regs.A >= M);
 }
