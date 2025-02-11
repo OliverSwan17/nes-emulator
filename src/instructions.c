@@ -4,6 +4,7 @@
 extern Registers regs;
 extern Memory memory;
 extern InstructionMetaData imdLookup[256];
+extern int storedI; // -1 means don't cahnge I, 0 means clear I, 1 means set I 
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
 void initInstructionMetaData() {
@@ -152,6 +153,10 @@ void initInstructionMetaData() {
     imdLookup[0x24] = (InstructionMetaData){"BIT", ZEROPAGE, 2, 3};
     imdLookup[0x2C] = (InstructionMetaData){"BIT", ABSOLUTE, 3, 4};
 
+    imdLookup[0x08] = (InstructionMetaData){"PHP", IMPLIED, 1, 3};
+
+    imdLookup[0x28] = (InstructionMetaData){"PLP", IMPLIED, 1, 4};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -255,6 +260,13 @@ void executeInstruction(Instruction instruction) {
 
     if (strcmp(instruction.mnemonic, "BIT") == 0)
         BIT(instruction);
+    
+        
+    if (strcmp(instruction.mnemonic, "PHP") == 0)
+        PHP();
+
+    if (strcmp(instruction.mnemonic, "PLP") == 0)
+        PLP();
 }
 
 void NOP() {
@@ -805,4 +817,20 @@ void BIT(Instruction instruction) {
     regs.SR.N = M >> 7;
     regs.SR.V = (M >> 6) & 1;
     regs.SR.Z = ((regs.A & M) == 0); 
+}
+
+void PHP() {
+    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 4) | (1 << 5));
+    regs.SP--;
+}
+
+void PLP() {
+    regs.SP++;
+    u8 result = READ_RAM(0x100 + regs.SP);
+    regs.SR.C = result & 0b1;
+    regs.SR.Z = (result >> 1) & 0b1;
+    storedI = (result >> 2) & 0b1;
+    regs.SR.D = (result >> 3) & 0b1;
+    regs.SR.V = (result >> 6) & 0b1;
+    regs.SR.N = (result >> 7) & 0b1;
 }

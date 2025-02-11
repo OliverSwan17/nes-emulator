@@ -70,3 +70,5 @@ void ROR(Instruction);
 void JMP(Instruction);
 void CMP(Instruction);
 void BIT(Instruction);
+void PHP();
+void PLP();

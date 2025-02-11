@@ -6,6 +6,9 @@ InstructionMetaData imdLookup[256];
 Registers regs;
 Memory memory;
 
+int storedI;
+u8 writeIDelayedValueBool;
+
 void powerUp() {
     regs.A = 5;
     regs.X = 0;
@@ -20,6 +23,8 @@ void powerUp() {
     regs.SR.R = 0;
     regs.SR.V = 0;
     regs.SR.N = 0;
+
+    storedI = 1;
 
     initInstructionMetaData();
     //u8 code[] = {0x20, 0x06, 0x08, 0xEA, 0xCA, 0x22, 0xEA, 0xEA, 0xEA, 0xE8, 0x60}; // Testing JSR and RTS
@@ -157,7 +162,7 @@ void powerUp() {
     //u8 code [] = {0xA9, 0x17, 0xC9, 0x20, 0x22};
 
     // Testing BIT
-    u8 code[] = {0xA9, 0xFF, 0x85, 0x25, 0xA9, 0x17, 0x24, 0x25, 0x22};
+    //u8 code[] = {0xA9, 0xFF, 0x85, 0x25, 0xA9, 0x17, 0x24, 0x25, 0x22};
     /*
     LDA #$FF
     STA $25
@@ -165,10 +170,23 @@ void powerUp() {
     BIT $25
     */
 
+    // Testing PHP and PLP
+    u8 code[] = {0x78, 0x08, 0x58, 0x28, 0xEA, 0x22};
+    /*
+    SEI
+    PHP
+    CLI
+    PLP
+    NOP
+    */
+    
+
     memcpy(memory.program, code, sizeof(code));
 
     Instruction instruction;
     while (1) {
+        u8 setI = (storedI != -1); // Check if a PLP, CLI, or SEI was the last instruction to execute. 
+
         instruction = identifyInstruction((u8 *)&memory + regs.PC); // Fetch and decode
         if (instruction.opcode.byte == 0x22)
             break;
@@ -178,6 +196,11 @@ void powerUp() {
 
         if (strcmp(instruction.mnemonic, "JSR") != 0 && strcmp(instruction.mnemonic, "RTS") != 0 && strcmp(instruction.mnemonic, "JMP") != 0) // Add other branch and jumps in the future
             regs.PC += instruction.bytes;
+        
+        if (setI) {
+            regs.SR.I = storedI;
+            storedI = -1;
+        }
     }
 
     drawText(instruction);
