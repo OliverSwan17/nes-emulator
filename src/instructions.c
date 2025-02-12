@@ -4,7 +4,6 @@
 extern Registers regs;
 extern Memory memory;
 extern InstructionMetaData imdLookup[256];
-extern int storedI; // -1 means don't cahnge I, 0 means clear I, 1 means set I 
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
 void initInstructionMetaData() {
@@ -154,8 +153,16 @@ void initInstructionMetaData() {
     imdLookup[0x2C] = (InstructionMetaData){"BIT", ABSOLUTE, 3, 4};
 
     imdLookup[0x08] = (InstructionMetaData){"PHP", IMPLIED, 1, 3};
-
     imdLookup[0x28] = (InstructionMetaData){"PLP", IMPLIED, 1, 4};
+
+    imdLookup[0x90] = (InstructionMetaData){"BCC", RELATIVE, 2, 2};
+    imdLookup[0xB0] = (InstructionMetaData){"BCS", RELATIVE, 2, 2};
+    imdLookup[0xF0] = (InstructionMetaData){"BEQ", RELATIVE, 2, 2};
+    imdLookup[0x30] = (InstructionMetaData){"BMI", RELATIVE, 2, 2};
+    imdLookup[0xD0] = (InstructionMetaData){"BNE", RELATIVE, 2, 2};
+    imdLookup[0x10] = (InstructionMetaData){"BPL", RELATIVE, 2, 2};
+    imdLookup[0x50] = (InstructionMetaData){"BVC", RELATIVE, 2, 2};
+    imdLookup[0x70] = (InstructionMetaData){"BVS", RELATIVE, 2, 2};
 
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
@@ -267,6 +274,25 @@ void executeInstruction(Instruction instruction) {
 
     if (strcmp(instruction.mnemonic, "PLP") == 0)
         PLP();
+    
+
+    if (strcmp(instruction.mnemonic, "BCC") == 0)
+        BCC(instruction);
+    if (strcmp(instruction.mnemonic, "BCS") == 0)
+        BCS(instruction);
+    if (strcmp(instruction.mnemonic, "BEQ") == 0)
+        BEQ(instruction);
+    if (strcmp(instruction.mnemonic, "BMI") == 0)
+        BMI(instruction);
+    if (strcmp(instruction.mnemonic, "BNE") == 0)
+        BNE(instruction);
+    if (strcmp(instruction.mnemonic, "BPL") == 0)
+        BPL(instruction);
+    if (strcmp(instruction.mnemonic, "BVC") == 0)
+        BVC(instruction);
+    if (strcmp(instruction.mnemonic, "BVS") == 0)
+        BVS(instruction);
+
 }
 
 void NOP() {
@@ -327,6 +353,7 @@ void JSR(Instruction instruction) {
     memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
     
     regs.PC = instruction.operand.bytes; // Setting the PC
+    regs.PC -= 3; // Will be incremented in fetch, decode, execute cycle
 }
 
 void RTS() {
@@ -337,6 +364,7 @@ void RTS() {
     regs.SP++;
 
     regs.PC = returnAddr + 1;
+    regs.PC -= 1; // Will be incremented in fetch, decode, execute cycle
 }
 
 void PHA() {
@@ -773,6 +801,8 @@ void JMP(Instruction instruction) {
             regs.PC = READ_LLHH_RAM(operand);
         }
     }
+
+    regs.PC -= 3; // Will be incremented in fetch, decode, execute cycle
 }
 
 void CMP(Instruction instruction) {
@@ -829,8 +859,50 @@ void PLP() {
     u8 result = READ_RAM(0x100 + regs.SP);
     regs.SR.C = result & 0b1;
     regs.SR.Z = (result >> 1) & 0b1;
-    storedI = (result >> 2) & 0b1;
+    regs.SR.I = (result >> 2) & 0b1;
     regs.SR.D = (result >> 3) & 0b1;
     regs.SR.V = (result >> 6) & 0b1;
     regs.SR.N = (result >> 7) & 0b1;
+}
+
+
+
+void BCC(Instruction instruction) {
+    if (regs.SR.C == 0)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BCS(Instruction instruction) {
+    if (regs.SR.C)
+    regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BEQ(Instruction instruction) {
+    if (regs.SR.Z)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BMI(Instruction instruction) {
+    if (regs.SR.N)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BNE(Instruction instruction) {
+    if (regs.SR.Z == 0)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BPL(Instruction instruction) {
+    if (regs.SR.N == 0)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BVC(Instruction instruction) {
+    if (regs.SR.V == 0)
+        regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BVS(Instruction instruction) {
+    if (regs.SR.V)
+        regs.PC += (s8) instruction.operand.lowByte;
 }
