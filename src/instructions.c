@@ -164,6 +164,8 @@ void initInstructionMetaData() {
     imdLookup[0x50] = (InstructionMetaData){"BVC", RELATIVE, 2, 2};
     imdLookup[0x70] = (InstructionMetaData){"BVS", RELATIVE, 2, 2};
 
+    imdLookup[0x00] = (InstructionMetaData){"BRK", IMPLIED, 2, 7};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -292,6 +294,9 @@ void executeInstruction(Instruction instruction) {
         BVC(instruction);
     if (strcmp(instruction.mnemonic, "BVS") == 0)
         BVS(instruction);
+    
+    if (strcmp(instruction.mnemonic, "BRK") == 0)
+        BRK(instruction);
 
 }
 
@@ -353,7 +358,6 @@ void JSR(Instruction instruction) {
     memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
     
     regs.PC = instruction.operand.bytes; // Setting the PC
-    regs.PC -= 3; // Will be incremented in fetch, decode, execute cycle
 }
 
 void RTS() {
@@ -364,7 +368,6 @@ void RTS() {
     regs.SP++;
 
     regs.PC = returnAddr + 1;
-    regs.PC -= 1; // Will be incremented in fetch, decode, execute cycle
 }
 
 void PHA() {
@@ -905,4 +908,15 @@ void BVC(Instruction instruction) {
 void BVS(Instruction instruction) {
     if (regs.SR.V)
         regs.PC += (s8) instruction.operand.lowByte;
+}
+
+void BRK() {
+    WRITE_RAM(0x100 + regs.SP, regs.PC + 2);
+    regs.SP--;
+
+    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 4) | (1 << 5));
+    regs.SP--;
+
+    regs.SR.I = 1;
+    regs.PC = READ_LLHH_RAM(0xFFFE);
 }

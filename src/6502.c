@@ -10,7 +10,7 @@ void powerUp() {
     regs.A = 5;
     regs.X = 0;
     regs.Y = 10;
-    regs.PC = sizeof(Memory) - sizeof(memory.program); // Will change for NES
+    regs.PC = 2048; // Will change for NES
     regs.SP = 0xFF;
     regs.SR.C = 0;
     regs.SR.Z = 0;
@@ -167,7 +167,7 @@ void powerUp() {
     */
 
     // Testing PHP and PLP
-    u8 code[] = {0x78, 0x08, 0x58, 0x28, 0xEA, 0xEA, 0x22};
+    //u8 code[] = {0x78, 0x08, 0x58, 0x28, 0xEA, 0xEA, 0x22};
     /*
     SEI
     PHP
@@ -175,7 +175,17 @@ void powerUp() {
     PLP
     NOP
     */
-    
+
+    // Testing BRK
+    u8 code[] = {0xA9, 0x0C, 0x8D, 0xFE, 0xFF, 0xA9, 0x08, 0x8D, 0xFF, 0xFF, 0x00, 0x00, 0xEA, 0x22};
+    /*
+    LDA #$0A
+    STA $FFFE
+    LDA #$08
+    STA $FFFF
+    BRK
+    NOP
+    */
 
     memcpy(memory.program, code, sizeof(code));
 
@@ -188,8 +198,12 @@ void powerUp() {
         drawText(instruction);
         executeInstruction(instruction); // Execute
 
-        
-        regs.PC += instruction.bytes;
+        if (strcmp(instruction.mnemonic, "JSR") != 0 
+            && strcmp(instruction.mnemonic, "RTS") != 0 
+            && strcmp(instruction.mnemonic, "JMP") != 0
+            && strcmp(instruction.mnemonic, "BRK") != 0
+            && strcmp(instruction.mnemonic, "RTI") != 0
+            ) {regs.PC += instruction.bytes;}
     }
 
     drawText(instruction);

@@ -1,5 +1,6 @@
 hex_string = """
-78 08 58 28 EA
+A9 07 8D FE FF A9 80 8D
+FF FF 00 EA
 """
 
 # Split the string into individual hex values, remove whitespace, and convert them to the required format
