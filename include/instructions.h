@@ -60,6 +60,7 @@ void STY(Instruction);
 void CPX(Instruction);
 void CPY(Instruction);
 void INC(Instruction);
+void DEC(Instruction);
 void AND(Instruction);
 void ORA(Instruction);
 void EOR(Instruction);

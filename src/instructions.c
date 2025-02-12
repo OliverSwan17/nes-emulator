@@ -66,6 +66,11 @@ void initInstructionMetaData() {
     imdLookup[0xEE] = (InstructionMetaData){"INC", ABSOLUTE, 3, 6};
     imdLookup[0xFE] = (InstructionMetaData){"INC", ABSOLUTE_X, 3, 7};
 
+    imdLookup[0xC6] = (InstructionMetaData){"DEC", ZEROPAGE, 2, 5};
+    imdLookup[0xD6] = (InstructionMetaData){"DEC", ZEROPAGE_X, 2, 6};
+    imdLookup[0xCE] = (InstructionMetaData){"DEC", ABSOLUTE, 3, 6};
+    imdLookup[0xDE] = (InstructionMetaData){"DEC", ABSOLUTE_X, 3, 7};
+
     imdLookup[0x29] = (InstructionMetaData){"AND", IMMEDIATE, 2, 2};
     imdLookup[0x25] = (InstructionMetaData){"AND", ZEROPAGE, 2, 3};
     imdLookup[0x35] = (InstructionMetaData){"AND", ZEROPAGE_X, 2, 4};
@@ -235,6 +240,9 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "INC") == 0)
         INC(instruction);
+    
+    if (strcmp(instruction.mnemonic, "DEC") == 0)
+        DEC(instruction);
     
     if (strcmp(instruction.mnemonic, "AND") == 0)
         AND(instruction);
@@ -524,6 +532,26 @@ void INC(Instruction instruction) {
         addr = instruction.operand.bytes + regs.X;
 
     memory.ram[addr]++;
+    u8 result = memory.ram[addr];
+    
+    UPDATE_Z_FLAG(result);
+    UPDATE_N_FLAG(result);
+}
+
+void DEC(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 addr;
+
+    if (addrMode == ZEROPAGE)
+        addr = instruction.operand.lowByte;
+    else if (addrMode == ZEROPAGE_X)
+        addr = instruction.operand.lowByte + regs.X;
+    else if (addrMode == ABSOLUTE)
+        addr = instruction.operand.bytes;
+    else if (addrMode == ABSOLUTE_X)
+        addr = instruction.operand.bytes + regs.X;
+
+    memory.ram[addr]--;
     u8 result = memory.ram[addr];
     
     UPDATE_Z_FLAG(result);

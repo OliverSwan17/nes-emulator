@@ -187,7 +187,7 @@ void powerUp() {
     NOP
     */
 
-    u8 code[] = {0x22};
+    u8 code[] = {0xC6, 0x17, 0xEA, 0x22};
 
     memcpy(memory.program, code, sizeof(code));
 
