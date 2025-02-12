@@ -165,6 +165,7 @@ void initInstructionMetaData() {
     imdLookup[0x70] = (InstructionMetaData){"BVS", RELATIVE, 2, 2};
 
     imdLookup[0x00] = (InstructionMetaData){"BRK", IMPLIED, 2, 7};
+    imdLookup[0x40] = (InstructionMetaData){"RTI", IMPLIED, 1, 6};
 
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
@@ -297,6 +298,9 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "BRK") == 0)
         BRK(instruction);
+    
+    if (strcmp(instruction.mnemonic, "RTI") == 0)
+        RTI(instruction);
 
 }
 
@@ -351,21 +355,22 @@ void CLV(){
 void JSR(Instruction instruction) {
     u16 returnAddr = regs.PC + 2; // Only + 2 because RTS will automatically add 1.
 
-    regs.SP--;
     memory.ram[0x100 + regs.SP] = (returnAddr >> 8) & 0xFF; // High byte
-
     regs.SP--;
+
+    
     memory.ram[0x100 + regs.SP] = returnAddr & 0xFF; // Low byte
+    regs.SP--;
     
     regs.PC = instruction.operand.bytes; // Setting the PC
 }
 
 void RTS() {
+    regs.SP++;
     u16 returnAddr = memory.ram[regs.SP + 0x100]; // Pop low byte
+    
     regs.SP++;
-
     returnAddr |= memory.ram[regs.SP + 0x100] << 8; // Pop high byte
-    regs.SP++;
 
     regs.PC = returnAddr + 1;
 }
@@ -919,4 +924,17 @@ void BRK() {
 
     regs.SR.I = 1;
     regs.PC = READ_LLHH_RAM(0xFFFE);
+}
+
+void RTI() {
+    regs.SP++;
+    regs.SR.byte = READ_RAM(0x100 + regs.SP) & (~(1 << 4)) & (~(1 << 5)); // Ignoring break and unused bit.
+
+    regs.SP++;
+    u16 returnAddr = memory.ram[regs.SP + 0x100]; // Pop low byte
+
+    regs.SP++;
+    returnAddr |= memory.ram[regs.SP + 0x100] << 8; // Pop high byte
+
+    regs.PC = returnAddr;
 }

@@ -81,3 +81,4 @@ void BPL(Instruction);
 void BVC(Instruction);
 void BVS(Instruction);
 void BRK();
+void RTI();
