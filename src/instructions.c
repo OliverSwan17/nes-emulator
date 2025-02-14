@@ -172,6 +172,24 @@ void initInstructionMetaData() {
     imdLookup[0x00] = (InstructionMetaData){"BRK", IMPLIED, 2, 7};
     imdLookup[0x40] = (InstructionMetaData){"RTI", IMPLIED, 1, 6};
 
+    imdLookup[0x69] = (InstructionMetaData){"ADC", IMMEDIATE, 2, 2};
+    imdLookup[0x65] = (InstructionMetaData){"ADC", ZEROPAGE, 2, 3};
+    imdLookup[0x75] = (InstructionMetaData){"ADC", ZEROPAGE_X, 2, 4};
+    imdLookup[0x6D] = (InstructionMetaData){"ADC", ABSOLUTE, 3, 4};
+    imdLookup[0x7D] = (InstructionMetaData){"ADC", ABSOLUTE_X, 3, 4};
+    imdLookup[0x79] = (InstructionMetaData){"ADC", ABSOLUTE_Y, 3, 4};
+    imdLookup[0x61] = (InstructionMetaData){"ADC", X_INDIRECT, 2, 6};
+    imdLookup[0x71] = (InstructionMetaData){"ADC", INDIRECT_Y, 2, 5};
+
+    imdLookup[0xE9] = (InstructionMetaData){"SBC", IMMEDIATE, 2, 2};
+    imdLookup[0xE5] = (InstructionMetaData){"SBC", ZEROPAGE, 2, 3};
+    imdLookup[0xF5] = (InstructionMetaData){"SBC", ZEROPAGE_X, 2, 4};
+    imdLookup[0xED] = (InstructionMetaData){"SBC", ABSOLUTE, 3, 4};
+    imdLookup[0xFD] = (InstructionMetaData){"SBC", ABSOLUTE_X, 3, 4};
+    imdLookup[0xF9] = (InstructionMetaData){"SBC", ABSOLUTE_Y, 3, 4};
+    imdLookup[0xE1] = (InstructionMetaData){"SBC", X_INDIRECT, 2, 6};
+    imdLookup[0xF1] = (InstructionMetaData){"SBC", INDIRECT_Y, 2, 5};
+
     // Custom instructions
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
@@ -309,6 +327,11 @@ void executeInstruction(Instruction instruction) {
     
     if (strcmp(instruction.mnemonic, "RTI") == 0)
         RTI(instruction);
+    
+    if (strcmp(instruction.mnemonic, "ADC") == 0)
+        ADC(instruction);
+    if (strcmp(instruction.mnemonic, "SBC") == 0)
+        SBC(instruction);
 
 }
 
@@ -965,4 +988,84 @@ void RTI() {
     returnAddr |= memory.ram[regs.SP + 0x100] << 8; // Pop high byte
 
     regs.PC = returnAddr;
+}
+
+void ADC(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+    u8 M = 0;
+    u8 A = regs.A;
+
+    if (addrMode == IMMEDIATE)
+        M = lowByte;
+    else if (addrMode == ZEROPAGE)
+        M = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_X)
+        M = READ_RAM(lowByte + regs.X);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_X) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.X);
+    else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.Y);
+    else if (addrMode == X_INDIRECT)
+        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+    else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
+        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+    
+    s8 signedResult = (s8) A + (s8) M;
+    u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
+
+
+    u8 C = (M + A) >> 7;
+
+    u8 result = A + M + C;
+
+    regs.A = result;
+
+    UPDATE_N_FLAG(result);
+    UPDATE_Z_FLAG(result);
+    regs.SR.C = C;
+    regs.SR.V = V;
+}
+
+void SBC(Instruction instruction) {
+    AddressingMode addrMode = instruction.addressingMode;
+    u16 operand = instruction.operand.bytes;
+    u8 lowByte = instruction.operand.lowByte;
+    u8 M = 0;
+    u8 A = regs.A;
+
+    if (addrMode == IMMEDIATE)
+        M = lowByte;
+    else if (addrMode == ZEROPAGE)
+        M = READ_RAM(lowByte);
+    else if (addrMode == ZEROPAGE_X)
+        M = READ_RAM(lowByte + regs.X);
+    else if (addrMode == ABSOLUTE)
+        M = READ_RAM(operand);
+    else if (addrMode == ABSOLUTE_X) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.X);
+    else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
+        M = READ_RAM(operand + regs.Y);
+    else if (addrMode == X_INDIRECT)
+        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+    else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
+        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+    
+    s8 signedResult = (s8) A - (s8) M;
+    u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
+
+
+    u8 C = (M - A) >> 7;
+
+    u8 result = A - M - (1 - C);
+
+    regs.A = result;
+
+    UPDATE_N_FLAG(result);
+    UPDATE_Z_FLAG(result);
+    regs.SR.C = C;
+    regs.SR.V = V;
 }

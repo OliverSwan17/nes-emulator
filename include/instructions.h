@@ -83,3 +83,5 @@ void BVC(Instruction);
 void BVS(Instruction);
 void BRK();
 void RTI();
+void ADC(Instruction);
+void SBC(Instruction);

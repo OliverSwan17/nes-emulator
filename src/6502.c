@@ -15,7 +15,7 @@ void powerUp() {
     regs.SR.C = 0;
     regs.SR.Z = 0;
     regs.SR.I = 1;
-    regs.SR.D = 0;
+    regs.SR.D = 0; // Remains 0 for the NES and has no effect if set
     regs.SR.B = 0;
     regs.SR.R = 0;
     regs.SR.V = 0;
