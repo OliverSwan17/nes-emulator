@@ -518,9 +518,9 @@ void CPX(Instruction instruction) {
         M = READ_RAM(instruction.operand.bytes);
     
     
-    regs.SR.C = (X >= M) ? 1: 0;
-    UPDATE_Z_FLAG(X - M);
-    UPDATE_N_FLAG(M);
+    regs.SR.C = (X >= M);
+    regs.SR.Z = (X == M);
+    UPDATE_N_FLAG(X - M);
 }
 
 void CPY(Instruction instruction) {
@@ -536,9 +536,9 @@ void CPY(Instruction instruction) {
         M = READ_RAM(instruction.operand.bytes);
     
     
-    regs.SR.C = (Y >= M) ? 1: 0;
-    UPDATE_Z_FLAG(Y - M);
-    UPDATE_N_FLAG(M);
+    regs.SR.C = (Y >= M);
+    regs.SR.Z = (Y == M);
+    UPDATE_N_FLAG(Y - M);
 }
 
 void INC(Instruction instruction) {
@@ -943,7 +943,7 @@ void BEQ(Instruction instruction) {
 
 void BMI(Instruction instruction) {
     if (regs.SR.N)
-        regs.PC += (s8) instruction.operand.lowByte;
+        regs.PC += (s16)(s8) instruction.operand.lowByte;
 }
 
 void BNE(Instruction instruction) {
@@ -1018,7 +1018,7 @@ void ADC(Instruction instruction) {
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
 
 
-    u8 C = (M + A) >> 7;
+    u8 C = (u16) A + (u16) M > 255;
 
     u8 result = A + M + C;
 
