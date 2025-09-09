@@ -86,7 +86,7 @@ typedef struct InstructionMetaData {
 } InstructionMetaData;
 
 typedef struct Memory {
-    u8 ram[2048];
+    u8 ram[0xC000];
     u8 program[256];
     u8 unMapped[63232];
 } Memory;

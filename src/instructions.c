@@ -849,8 +849,9 @@ void JMP(Instruction instruction) {
     AddressingMode addrMode = instruction.addressingMode;
     u16 operand = instruction.operand.bytes;
 
-    if (addrMode == ABSOLUTE)
+    if (addrMode == ABSOLUTE) {
         regs.PC = operand;
+    }
     else if (addrMode == INDIRECT) { // Special case for 6502 JMP bug
         if (instruction.operand.lowByte == 0xFF) { 
             u16 llAdr = operand;
@@ -860,8 +861,6 @@ void JMP(Instruction instruction) {
             regs.PC = READ_LLHH_RAM(operand);
         }
     }
-
-    regs.PC -= 3; // Will be incremented in fetch, decode, execute cycle
 }
 
 void CMP(Instruction instruction) {
@@ -1057,8 +1056,7 @@ void SBC(Instruction instruction) {
     s8 signedResult = (s8) A - (s8) M;
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
 
-
-    u8 C = (M - A) >> 7;
+    u8 C = (u16) M - (u16) A < 0;
 
     u8 result = A - M - (1 - C);
 
