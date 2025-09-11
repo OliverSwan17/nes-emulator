@@ -986,7 +986,7 @@ void BRK() {
 
 void RTI() {
     regs.SP++;
-    regs.SR.byte = READ_RAM(0x100 + regs.SP) & (~(1 << 4)) & (~(1 << 5)); // Ignoring break and unused bit.
+    regs.SR.byte = (READ_RAM(0x100 + regs.SP) & (~(1 << 4))) | ((1 << 5)); // Ignoring break and unused bit.
 
     regs.SP++;
     u16 returnAddr = memory.ram[regs.SP + 0x100]; // Pop low byte

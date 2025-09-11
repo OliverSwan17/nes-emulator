@@ -1752,7 +1752,7 @@ void powerUp() {
             && strcmp(instruction.mnemonic, "RTI") != 0
             ) {regs.PC += instruction.bytes;}
         
-        if (count == 1000)
+        if (count == 2000)
             break;
         
         count++;
