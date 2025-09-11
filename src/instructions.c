@@ -678,8 +678,8 @@ void LDY(Instruction instruction) {
     else if (addrMode == ABSOLUTE_X)
         regs.Y = READ_RAM(ABSOLUTE_X_ADDR(operand, regs.X));
 
-    UPDATE_Z_FLAG(regs.X);
-    UPDATE_N_FLAG(regs.X);
+    UPDATE_Z_FLAG(regs.Y);
+    UPDATE_N_FLAG(regs.Y);
 }
 
 void ASL(Instruction instruction) {
@@ -1016,8 +1016,7 @@ void ADC(Instruction instruction) {
     s8 signedResult = (s8) A + (s8) M;
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
 
-
-    u8 C = (u16) A + (u16) M > 255;
+    u8 C = ((u16) A + (u16) M + (u16) regs.SR.C) > 255;
 
     u8 result = A + M + regs.SR.C;
 
