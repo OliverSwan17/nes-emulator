@@ -5,7 +5,7 @@
 #define READ_RAM(addr) (memory.ram[(addr)])
 #define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))
 
-#define ZEROPAGE_X_ADDR(lowByte, X) ((lowByte) + (X))
+#define ZEROPAGE_X_ADDR(lowByte, X) (((lowByte) + (X)) & 0xFF)
 #define ZEROPAGE_Y_ADDR(lowByte, Y) ((lowByte) + (Y))
 #define ABSOLUTE_ADDR(lowByte, highByte) ((highByte << 8) | lowByte)
 #define ABSOLUTE_X_ADDR(operand, X) ((operand) + (X))
@@ -15,7 +15,7 @@
     ((memory.ram[((lowByte) + (X) + 1) & 0xFF] << 8) | (memory.ram[((lowByte) + (X)) & 0xFF]))
 
 #define INDIRECT_Y_ADDR(lowByte, Y) \
-    (((memory.ram[(lowByte) + 1] << 8) | memory.ram[(lowByte)]) + Y)
+    ((((memory.ram[((lowByte) + 1) & 0xFF] << 8) | memory.ram[(lowByte)]) + (Y)) & 0xFFFF)
 
 
 
