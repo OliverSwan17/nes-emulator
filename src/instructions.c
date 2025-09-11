@@ -353,10 +353,14 @@ void INY() {
 
 void DEX() {
     regs.X -= 1;
+    UPDATE_N_FLAG(regs.X);
+    UPDATE_Z_FLAG(regs.X);
 }
 
 void DEY() {
     regs.Y -= 1;
+    UPDATE_N_FLAG(regs.Y);
+    UPDATE_Z_FLAG(regs.Y);
 }
 
 void SEC(){
@@ -1056,8 +1060,8 @@ void SBC(Instruction instruction) {
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
         M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
     
-    s8 signedResult = (s8) A - (s8) M;
-    u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
+    s16 signedResult = (s16) A - (s16) M - (1 - regs.SR.C);
+    u8 V = ((A >> 7) != (M >> 7)) && ((signedResult >> 7) != (A >> 7));
 
     u8 C = ((s16) A - (s16) M - (1 - regs.SR.C)) >= 0;
 
