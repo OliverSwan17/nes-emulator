@@ -473,7 +473,7 @@ void LDA(Instruction instruction) {
     else if (addrMode == ZEROPAGE)
         regs.A = READ_RAM(lowByte);
     else if (addrMode == ZEROPAGE_X)
-        regs.A = READ_RAM(ZEROPAGE_X_ADDR(lowByte, X));
+        regs.A = READ_RAM((ZEROPAGE_X_ADDR(lowByte, X)));
     else if (addrMode == ABSOLUTE)
         regs.A = READ_RAM(operand);
     else if (addrMode == ABSOLUTE_X) // TODO: Special cycle case
@@ -481,9 +481,9 @@ void LDA(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         regs.A = READ_RAM(ABSOLUTE_Y_ADDR(operand, Y));
     else if (addrMode == X_INDIRECT)
-        regs.A = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, X));
+        regs.A = READ_RAM(X_INDIRECT_ADDR(lowByte, X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        regs.A = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, Y)); 
+        regs.A = READ_RAM(INDIRECT_Y_ADDR(lowByte, Y)); 
     
     UPDATE_Z_FLAG(regs.A);
     UPDATE_N_FLAG(regs.A);

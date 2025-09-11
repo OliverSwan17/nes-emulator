@@ -1,7 +1,7 @@
 #pragma once
 #include "6502.h"
 
-#define READ_LLHH_RAM(llAdr) ((memory.ram[(llAdr) + 1] << 8) | memory.ram[(llAdr)])
+#define READ_LLHH_RAM(llAdr)  ((memory.ram[((llAdr) + 1) & 0xFF] << 8) | memory.ram[(llAdr)])
 #define READ_RAM(addr) (memory.ram[(addr)])
 #define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))
 
@@ -12,7 +12,7 @@
 #define ABSOLUTE_Y_ADDR(operand, Y) ((operand) + (Y))
 
 #define X_INDIRECT_ADDR(lowByte, X) \
-    ((memory.ram[(lowByte) + (X) + 1] << 8) | (memory.ram[(lowByte) + (X)]))
+    ((memory.ram[((lowByte) + (X) + 1) & 0xFF] << 8) | (memory.ram[((lowByte) + (X)) & 0xFF]))
 
 #define INDIRECT_Y_ADDR(lowByte, Y) \
     (((memory.ram[(lowByte) + 1] << 8) | memory.ram[(lowByte)]) + Y)
