@@ -341,10 +341,14 @@ void NOP() {
 
 void INX() {
     regs.X += 1;
+    UPDATE_N_FLAG(regs.X);
+    UPDATE_Z_FLAG(regs.X);
 }
 
 void INY() {
     regs.Y += 1;
+    UPDATE_N_FLAG(regs.Y);
+    UPDATE_Z_FLAG(regs.Y);
 }
 
 void DEX() {
@@ -1055,9 +1059,9 @@ void SBC(Instruction instruction) {
     s8 signedResult = (s8) A - (s8) M;
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
 
-    u8 C = (u16) M - (u16) A < 0;
+    u8 C = ((s16) A - (s16) M - (1 - regs.SR.C)) >= 0;
 
-    u8 result = A - M - (1 - C);
+    u8 result = A - M - (1 - regs.SR.C);
 
     regs.A = result;
 
