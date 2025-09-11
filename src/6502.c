@@ -1731,6 +1731,10 @@ void powerUp() {
 
     memcpy(memory.program, code, sizeof(code));
 
+
+    // Debug
+    FILE *nestestLog = fopen("out/nestestLog.txt", "w");
+    
     Instruction instruction;
     while (1) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC); // Fetch and decode
@@ -1738,6 +1742,7 @@ void powerUp() {
             break;
 
         drawText(instruction);
+        writeNestestLog(nestestLog);
         executeInstruction(instruction); // Execute
 
         if (strcmp(instruction.mnemonic, "JSR") != 0 
@@ -1746,9 +1751,12 @@ void powerUp() {
             && strcmp(instruction.mnemonic, "BRK") != 0
             && strcmp(instruction.mnemonic, "RTI") != 0
             ) {regs.PC += instruction.bytes;}
+            
     }
 
     drawText(instruction);
+
+    fclose(nestestLog);
 }
 
 Instruction identifyInstruction(u8 *binary) {
@@ -1769,4 +1777,16 @@ Instruction identifyInstruction(u8 *binary) {
     }
 
     return instruction;
+}
+
+void writeNestestLog(FILE *nestestLog) {
+    if (nestestLog != NULL) {
+        fprintf(nestestLog, "A:%02X X:%02X Y:%02X P:%02X SP:%02X\n",
+                regs.A, 
+                regs.X, 
+                regs.Y, 
+                regs.SR.byte, 
+                regs.SP);
+        fflush(nestestLog);
+    }
 }

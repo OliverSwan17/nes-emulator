@@ -97,4 +97,5 @@ void initInstructionMetaData();
 Instruction identifyInstruction(u8 *binary);
 void powerUp();
 
-// Macros
+// Debug
+void writeNestestLog(FILE*);

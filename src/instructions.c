@@ -1019,7 +1019,7 @@ void ADC(Instruction instruction) {
 
     u8 C = (u16) A + (u16) M > 255;
 
-    u8 result = A + M + C;
+    u8 result = A + M + regs.SR.C;
 
     regs.A = result;
 
