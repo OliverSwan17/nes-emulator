@@ -765,7 +765,7 @@ void STX(Instruction instruction) {
     if (addrMode == ZEROPAGE)
         WRITE_RAM(lowByte, regs.X);
     else if (addrMode == ZEROPAGE_Y)
-        WRITE_RAM(lowByte + regs.Y, regs.X);
+        WRITE_RAM(ZEROPAGE_Y_ADDR(lowByte, regs.Y), regs.X);
     else if (addrMode == ABSOLUTE)
         WRITE_RAM(instruction.operand.bytes, regs.X);
 }
