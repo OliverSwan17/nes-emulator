@@ -1732,7 +1732,7 @@ void powerUp() {
     memcpy(memory.program, code, sizeof(code));
 
 
-    // Debug
+    // Debug.
     FILE *nestestLog = fopen("out/nestestLog.txt", "w");
     int count = 0;
     Instruction instruction;
