@@ -1,15 +1,16 @@
 #pragma once
 #include "6502.h"
 
-#define READ_LLHH_RAM(llAdr)  ((memory.ram[((llAdr) + 1) & 0xFF] << 8) | memory.ram[(llAdr)])
+#define READ_WORD_ZEROPAGE(operand)  ((memory.ram[((operand) + 1) & 0xFF] << 8) | memory.ram[(operand)])
+#define READ_WORD_ABSOLUTE(operand) ((memory.ram[(operand) + 1] << 8) | memory.ram[(operand)])
 #define READ_RAM(addr) (memory.ram[(addr)])
 #define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))
 
 #define ZEROPAGE_X_ADDR(lowByte, X) (((lowByte) + (X)) & 0xFF)
-#define ZEROPAGE_Y_ADDR(lowByte, Y) ((lowByte) + (Y))
-#define ABSOLUTE_ADDR(lowByte, highByte) ((highByte << 8) | lowByte)
-#define ABSOLUTE_X_ADDR(operand, X) ((operand) + (X))
-#define ABSOLUTE_Y_ADDR(operand, Y) ((operand) + (Y))
+#define ZEROPAGE_Y_ADDR(lowByte, Y) (((lowByte) + (Y)) & 0xFF)
+#define ABSOLUTE_ADDR(lowByte, highByte) (((highByte << 8) | lowByte) & 0xFFFF)
+#define ABSOLUTE_X_ADDR(operand, X) (((operand) + (X)) & 0xFFFF)
+#define ABSOLUTE_Y_ADDR(operand, Y) (((operand) + (Y)) & 0xFFFF)
 
 #define X_INDIRECT_ADDR(lowByte, X) \
     ((memory.ram[((lowByte) + (X) + 1) & 0xFF] << 8) | (memory.ram[((lowByte) + (X)) & 0xFF]))

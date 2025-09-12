@@ -859,14 +859,13 @@ void JMP(Instruction instruction) {
 
     if (addrMode == ABSOLUTE) {
         regs.PC = operand;
-    }
-    else if (addrMode == INDIRECT) { // Special case for 6502 JMP bug
-        if (instruction.operand.lowByte == 0xFF) { 
-            u16 llAdr = operand;
-            u16 hhAdr = operand &~ 0xFF;
-            regs.PC = (READ_RAM(llAdr)) | (READ_RAM(hhAdr) << 8);
+    } else if (addrMode == INDIRECT) {
+        // 6502 page boundary bug: if low byte of indirect address is 0xFF,
+        // the high byte is read from the same page instead of crossing to next page
+        if ((operand & 0xFF) == 0xFF) {
+            regs.PC = (memory.ram[operand & 0xFF00] << 8) | memory.ram[operand];
         } else {
-            regs.PC = READ_LLHH_RAM(operand);
+            regs.PC = (memory.ram[operand + 1] << 8) | memory.ram[operand];
         }
     }
 }
@@ -890,9 +889,9 @@ void CMP(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
 
     u8 result = regs.A - M;
     regs.SR.Z = (result == 0);
@@ -981,7 +980,7 @@ void BRK() {
     regs.SP--;
 
     regs.SR.I = 1;
-    regs.PC = READ_LLHH_RAM(0xFFFE);
+    regs.PC = READ_WORD_ABSOLUTE(0xFFFE);
 }
 
 void RTI() {
@@ -1017,9 +1016,9 @@ void ADC(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
     
     s8 signedResult = (s8) A + (s8) M;
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
@@ -1056,9 +1055,9 @@ void SBC(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_LLHH_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_LLHH_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
     
     s16 signedResult = (s16) A - (s16) M - (1 - regs.SR.C);
     u8 V = ((A >> 7) != (M >> 7)) && ((signedResult >> 7) != (A >> 7));
