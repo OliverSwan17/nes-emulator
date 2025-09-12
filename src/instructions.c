@@ -778,7 +778,7 @@ void STY(Instruction instruction) {
     if (addrMode == ZEROPAGE)
         WRITE_RAM(lowByte, regs.Y);
     else if (addrMode == ZEROPAGE_X)
-        WRITE_RAM(lowByte + regs.X, regs.Y);
+        WRITE_RAM(ZEROPAGE_X_ADDR(lowByte, regs.X), regs.Y);
     else if (addrMode == ABSOLUTE)
         WRITE_RAM(operand, regs.Y);
 }
