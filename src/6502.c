@@ -1752,7 +1752,7 @@ void powerUp() {
             && strcmp(instruction.mnemonic, "RTI") != 0
             ) {regs.PC += instruction.bytes;}
         
-        if (count >= 5000) {
+        if (count >= 8000) {
             drawText(instruction);
         }
         count++;

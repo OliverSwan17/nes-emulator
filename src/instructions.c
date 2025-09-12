@@ -7,6 +7,9 @@ extern InstructionMetaData imdLookup[256];
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
 void initInstructionMetaData() {
+    for (int i = 0; i < 256; i++)
+        imdLookup[i] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
+
     imdLookup[0xEA] = (InstructionMetaData){"NOP", IMPLIED, 1, 2};
 
     imdLookup[0xE8] = (InstructionMetaData){"INX", IMPLIED, 1, 2};
