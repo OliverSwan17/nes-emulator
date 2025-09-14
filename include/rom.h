@@ -19,4 +19,4 @@ typedef struct ROM_Header {
 
 #pragma pack(pop)
 
-int load_rom(const char* filename, uint8_t** rom, ROM_Header *romHeader);
+void load_rom(const char* filename, uint8_t** rom, ROM_Header *romHeader);
