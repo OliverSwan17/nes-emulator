@@ -1,6 +1,7 @@
 #include "rom.h"
 
 uint8_t *rom;
+ROM_Header romHeader;
 size_t romSize;
 
 void load_rom(const char* filename, uint8_t** rom, ROM_Header *romHeader) {
