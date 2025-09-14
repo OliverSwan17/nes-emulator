@@ -1734,16 +1734,15 @@ void powerUp() {
 
     // Debug.
     FILE *nestestLog = fopen("out/nestestLog.txt", "w");
-    int count = 0;
     Instruction instruction;
     while (1) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC); // Fetch and decode
         if (instruction.opcode.byte == 0x22)
             break;
 
-        //drawText(instruction);
+        drawText(instruction);
         writeNestestLog(nestestLog);
-        executeInstruction(instruction); // Execute
+        executeInstruction(instruction);
 
         if (strcmp(instruction.mnemonic, "JSR") != 0 
             && strcmp(instruction.mnemonic, "RTS") != 0 
@@ -1751,11 +1750,6 @@ void powerUp() {
             && strcmp(instruction.mnemonic, "BRK") != 0
             && strcmp(instruction.mnemonic, "RTI") != 0
             ) {regs.PC += instruction.bytes;}
-        
-        if (count >= 8000) {
-            drawText(instruction);
-        }
-        count++;
     }
 
     drawText(instruction);
