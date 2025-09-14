@@ -976,12 +976,12 @@ void BVS(Instruction instruction) {
 }
 
 void BRK() {
-    WRITE_RAM(0x100 + regs.SP, regs.PC + 2);
+    WRITE_RAM(0x100 + regs.SP, ((regs.PC + 2) >> 8) & 0xFF);
     regs.SP--;
-
-    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 4) | (1 << 5));
+    WRITE_RAM(0x100 + regs.SP, (regs.PC + 2) & 0xFF);
     regs.SP--;
-
+    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 5) | (1 << 4)); // Set unused bit (5) and break bit (4)
+    regs.SP--;
     regs.SR.I = 1;
     regs.PC = READ_WORD_ABSOLUTE(0xFFFE);
 }

@@ -25,10 +25,7 @@ void powerUp() {
     int counter = 0;
     while (1) {
         instruction = identifyInstruction((u8 *)&memory + regs.PC); // Fetch and decode
-        if (instruction.opcode.byte == 0x22)
-            break;
-
-        draw(instruction);
+        //draw(instruction);
         writeNestestLog(nestestLog);
         executeInstruction(instruction);
 
