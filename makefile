@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude -I/mingw64/include -g
-LDFLAGS = -L/mingw64/lib -lpdcurses
+CFLAGS = -Wall -Wextra -Iinclude -I/mingw64/include/SDL2 -g
+LDFLAGS = -L/mingw64/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 
 SRC_DIR = src
 INC_DIR = include

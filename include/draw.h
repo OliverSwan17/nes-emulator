@@ -1,14 +1,15 @@
 #pragma once
 #include "6502.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
-void drawZeroPage();
-void drawProgram(u8 pcOffset);
-void drawStack(u8 spOffset);
-void drawRegisters();
-void drawStatusBits();
-void drawInstructionToExecute(Instruction instruction);
-void drawText(Instruction instruction);
+// Initialize/cleanup SDL2 drawing system
+int initDraw(void);
+void cleanupDraw(void);
 
-// Unused
+// Main drawing function
+void draw(Instruction instruction);
+
+// Unused (kept for compatibility)
 void printRegisters(Registers regs);
-void printInstruction(Instruction Instruction);
+void printInstruction(Instruction instruction);

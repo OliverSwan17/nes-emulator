@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#pragma pack(push, 1)    // Ensure no padding between fields
+#pragma pack(push, 1)
 typedef struct ROM_Header {
     uint8_t magic[4];    // "NES\x1A"
     uint8_t prgRomSize;  // PRG ROM size in 16KB units

@@ -1,15 +1,17 @@
 #include "6502.h"
 #include "rom.h"
+#include "draw.h"
 
 extern Registers regs;
 extern Memory memory;
 extern u8 *rom;
 extern size_t romSize;
 
-int main() {
+int main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
     
     ROM_Header romHeader;
-    //load_rom("roms/Super_mario_brothers.nes", &rom, &romHeader);
     load_rom("roms/6502_test.bin", &rom, &romHeader);
 
     printf("Magic: %.4s, PRG: %dKB, CHR: %dKB, Mapper: %d, Flags: 6=0x%02X 7=0x%02X 8=0x%02X 9=0x%02X 10=0x%02X\n", 
@@ -18,14 +20,9 @@ int main() {
        romHeader.flags6, romHeader.flags7, romHeader.flags8, romHeader.flags9, romHeader.flags10);
     printf("ROM Size: %llu Bytes\n", romSize);
 
-    // Pdcurses
-    initscr();
-    resize_term(40, 80);
-    PDC_set_title("6502");
+    initDraw();
+    powerUp(); // 6502
+    cleanupDraw();
 
-    // 6502
-    powerUp();
-
-    endwin();
     return 0;
 }

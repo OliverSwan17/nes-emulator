@@ -1,71 +1,162 @@
 #include "draw.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 extern Registers regs;
 extern Memory memory;
 
-void drawText(Instruction instruction) {
-    clear();
+// Colors
+#undef COLOR_WHITE
+#undef COLOR_BLACK
+#define SDL_COLOR_WHITE {255, 255, 255, 255}
+#define SDL_COLOR_BLACK {0, 0, 0, 255}
+#define SDL_COLOR_HIGHLIGHT {255, 255, 0, 255}
+
+// SDL2 context
+typedef struct {
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    TTF_Font* font;
+    int char_width;
+    int char_height;
+} DrawContext;
+
+static DrawContext g_drawCtx = {0};
+static void drawString(int col, int row, const char* text, int highlight);
+static void clearScreen(void);
+static void drawZeroPage(void);
+static void drawStack(u8 spOffset);
+static void drawRegisters(void);
+static void drawStatusBits(void);
+static void drawInstructionToExecute(Instruction instruction);
+static void drawProgram(u8 pcOffset);
+
+int initDraw(void) {
+    SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
+    g_drawCtx.window = SDL_CreateWindow("6502 Emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_SHOWN);
+    g_drawCtx.renderer = SDL_CreateRenderer(g_drawCtx.window, -1, SDL_RENDERER_ACCELERATED);
+    g_drawCtx.font = TTF_OpenFont("C:\\Windows\\Fonts\\consola.ttf", 16);
+    TTF_SizeText(g_drawCtx.font, "A", &g_drawCtx.char_width, &g_drawCtx.char_height);
+    return 0;
+}
+
+void cleanupDraw(void) {
+    if (g_drawCtx.font) TTF_CloseFont(g_drawCtx.font);
+    if (g_drawCtx.renderer) SDL_DestroyRenderer(g_drawCtx.renderer);
+    if (g_drawCtx.window) SDL_DestroyWindow(g_drawCtx.window);
+    TTF_Quit();
+    SDL_Quit();
+}
+
+static void drawString(int col, int row, const char* text, int highlight) {
+    SDL_Color color = highlight ? (SDL_Color)SDL_COLOR_HIGHLIGHT : (SDL_Color)SDL_COLOR_WHITE;
+    SDL_Surface* surface = TTF_RenderText_Solid(g_drawCtx.font, text, color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(g_drawCtx.renderer, surface);
+    SDL_Rect destRect = {col * g_drawCtx.char_width, row * g_drawCtx.char_height, surface->w, surface->h};
+
+    SDL_RenderCopy(g_drawCtx.renderer, texture, NULL, &destRect);
+    SDL_DestroyTexture(texture);
+    SDL_FreeSurface(surface);
+}
+
+static void clearScreen(void) {
+    SDL_SetRenderDrawColor(g_drawCtx.renderer, 0, 0, 0, 255);
+    SDL_RenderClear(g_drawCtx.renderer);
+}
+
+static void presentScreen(void) {
+    SDL_RenderPresent(g_drawCtx.renderer);
+}
+
+void draw(Instruction instruction) {
+    clearScreen();
     drawZeroPage();
     drawStack(regs.SP);
     drawProgram(regs.PC - PROGRAM_OFFSET);
     drawRegisters();
     drawStatusBits();
     drawInstructionToExecute(instruction);
-    refresh();
-    getch();
+    presentScreen();
+    
+    SDL_Event e;
+    int waiting = 1;
+    while (waiting) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                cleanupDraw();
+                exit(0);
+            }
+            if (e.type == SDL_KEYDOWN) {
+                waiting = 0;
+            }
+        }
+        SDL_Delay(16);
+    }
 }
 
-void drawZeroPage() {
+void drawZeroPage(void) {
+    char buffer[4];
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
-            printw("%02X ", memory.ram[i * 16 + j]);
+            snprintf(buffer, sizeof(buffer), "%02X ", memory.ram[i * 16 + j]);
+            drawString(j * 3, i, buffer, 0);
         }
-        printw("\n");
     }
-    printw("\n");
-
 }
 
 void drawStack(u8 spOffset) {
+    char buffer[4];
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
-            if (j + i * 16 == spOffset) {
-                attron(A_REVERSE);    // Reverse video (swap foreground and background)
-                printw("%02X", memory.ram[0x100 + i * 16 + j]);
-                attroff(A_REVERSE);
-                printw(" ");
-            }
-            else
-                printw("%02X ", memory.ram[0x100 + i * 16 + j]);
+            int highlight = (j + i * 16 == spOffset) ? 1 : 0;
+            snprintf(buffer, sizeof(buffer), "%02X ", memory.ram[0x100 + i * 16 + j]);
+            drawString(j * 3, 17 + i, buffer, highlight);
         }
-        printw("\n");
     }
-    printw("\n");
 }
 
-void drawRegisters() {
-    mvprintw(0, 50, " A: 0x%02X\n", regs.A);
-    mvprintw(1, 50, " X: 0x%02X\n", regs.X);
-    mvprintw(2, 50, " Y: 0x%02X\n", regs.Y);
-    mvprintw(3, 50, "SP: 0x%02X\n", regs.SP);
-    mvprintw(4, 50, "PC: 0x%04X\n", regs.PC);
-    mvprintw(5, 50, "SR: 0x%02X\n", regs.SR.byte);
+void drawRegisters(void) {
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), " A: 0x%02X", regs.A);
+    drawString(50, 0, buffer, 0);
+    snprintf(buffer, sizeof(buffer), " X: 0x%02X", regs.X);
+    drawString(50, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), " Y: 0x%02X", regs.Y);
+    drawString(50, 2, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "SP: 0x%02X", regs.SP);
+    drawString(50, 3, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "PC: 0x%04X", regs.PC);
+    drawString(50, 4, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "SR: 0x%02X", regs.SR.byte);
+    drawString(50, 5, buffer, 0);
 }
 
-void drawStatusBits() {
-    mvprintw(0, 62, "C Z I D B R V N\n");
-    mvprintw(1, 62, "%u", regs.SR.C);
-    mvprintw(1, 64, "%u", regs.SR.Z);
-    mvprintw(1, 66, "%u", regs.SR.I);
-    mvprintw(1, 68, "%u", regs.SR.D);
-    mvprintw(1, 70, "%u", regs.SR.B);
-    mvprintw(1, 72, "- ");
-    mvprintw(1, 74, "%u", regs.SR.V);
-    mvprintw(1, 76, "%u", regs.SR.N);
+void drawStatusBits(void) {
+    char buffer[32];
+    drawString(62, 0, "C Z I D B R V N", 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.C);
+    drawString(62, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.Z);
+    drawString(64, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.I);
+    drawString(66, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.D);
+    drawString(68, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.B);
+    drawString(70, 1, buffer, 0);
+    drawString(72, 1, "-", 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.V);
+    drawString(74, 1, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "%u", regs.SR.N);
+    drawString(76, 1, buffer, 0);
 }
 
 void drawInstructionToExecute(Instruction instruction) {
     char mode[20];
+    char buffer[64];
+    
     switch (instruction.addressingMode) {
         case ACCUMULATOR:
             strcpy(mode, "ACCUMULATOR");
@@ -104,34 +195,36 @@ void drawInstructionToExecute(Instruction instruction) {
             strcpy(mode, "ZEROPAGE_X");
             break;
         case ZEROPAGE_Y:
-            strcpy(mode, "ZEROPAGE_X");
+            strcpy(mode, "ZEROPAGE_Y");
             break;
     }
 
-    mvprintw(7, 50, "Mnemonic: %s\n", instruction.mnemonic);
-    mvprintw(8, 50, "Addressing Mode: %s", mode);
-    mvprintw(9, 50, "Opcode byte: 0x%02X\n", instruction.opcode.byte);
-    mvprintw(10, 50, "Operand bytes: 0x%04X\n", instruction.operand.bytes);
-    mvprintw(11, 50, "Bytes: %u\n", instruction.bytes);
-    mvprintw(12, 50, "Cycles: %u\n", instruction.cycles);
+    snprintf(buffer, sizeof(buffer), "Mnemonic: %s", instruction.mnemonic);
+    drawString(50, 7, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "Addressing Mode: %s", mode);
+    drawString(50, 8, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "Opcode byte: 0x%02X", instruction.opcode.byte);
+    drawString(50, 9, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "Operand bytes: 0x%04X", instruction.operand.bytes);
+    drawString(50, 10, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "Bytes: %u", instruction.bytes);
+    drawString(50, 11, buffer, 0);
+    snprintf(buffer, sizeof(buffer), "Cycles: %u", instruction.cycles);
+    drawString(50, 12, buffer, 0);
 }
 
 void drawProgram(u8 pcOffset) {
+    char buffer[4];
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 16; j++) {
-            if (j + i * 16 == pcOffset) {
-                attron(A_REVERSE);    // Reverse video (swap foreground and background)
-                printw("%02X", memory.program[i * 16 + j]);
-                attroff(A_REVERSE);
-                printw(" ");
-            }
-            else
-                printw("%02X ", memory.program[i * 16 + j]);
+            int highlight = (j + i * 16 == pcOffset) ? 1 : 0;
+            snprintf(buffer, sizeof(buffer), "%02X ", memory.program[i * 16 + j]);
+            drawString(j * 3, 34 + i, buffer, highlight);
         }
-        printw("\n");
     }
 }
 
+// Keep the original printf functions for compatibility
 void printRegisters(Registers regs) {
     printf("------------------------------------------------\n");
     printf("A: 0x%02X\n", regs.A);

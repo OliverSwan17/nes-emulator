@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <curses.h>
 
 #define PROGRAM_OFFSET 2048
 
@@ -85,11 +84,13 @@ typedef struct InstructionMetaData {
     u8 cycles;
 } InstructionMetaData;
 
+#pragma pack(push, 1)
 typedef struct Memory {
     u8 ram[0xC000];
     u8 program[256];
     u8 unMapped[63232];
 } Memory;
+#pragma pack(pop)
 
 
 // Functions
