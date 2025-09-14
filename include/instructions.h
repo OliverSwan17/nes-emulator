@@ -1,7 +1,6 @@
 #pragma once
 #include "6502.h"
 
-#define READ_WORD_ZEROPAGE(operand)  ((memory.ram[((operand) + 1) & 0xFF] << 8) | memory.ram[(operand)])
 #define READ_WORD_ABSOLUTE(operand) ((memory.ram[(operand) + 1] << 8) | memory.ram[(operand)])
 #define READ_RAM(addr) (memory.ram[(addr)])
 #define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))

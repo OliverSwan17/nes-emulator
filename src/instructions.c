@@ -892,9 +892,9 @@ void CMP(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
 
     u8 result = regs.A - M;
     regs.SR.Z = (result == 0);
@@ -942,7 +942,7 @@ void BCC(Instruction instruction) {
 
 void BCS(Instruction instruction) {
     if (regs.SR.C)
-    regs.PC += (s8) instruction.operand.lowByte;
+        regs.PC += (s8) instruction.operand.lowByte;
 }
 
 void BEQ(Instruction instruction) {
@@ -1019,9 +1019,9 @@ void ADC(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
     
     s8 signedResult = (s8) A + (s8) M;
     u8 V = ((A >> 7) == (M >> 7)) && ((signedResult >> 7) != (A >> 7));
@@ -1058,9 +1058,9 @@ void SBC(Instruction instruction) {
     else if (addrMode == ABSOLUTE_Y) // TODO: Special cycle case
         M = READ_RAM(operand + regs.Y);
     else if (addrMode == X_INDIRECT)
-        M = READ_WORD_ZEROPAGE(X_INDIRECT_ADDR(lowByte, regs.X));
+        M = READ_RAM(X_INDIRECT_ADDR(lowByte, regs.X));
     else if (addrMode == INDIRECT_Y) // TODO: Special cycle case
-        M = READ_WORD_ZEROPAGE(INDIRECT_Y_ADDR(lowByte, regs.Y));
+        M = READ_RAM(INDIRECT_Y_ADDR(lowByte, regs.Y));
     
     s16 signedResult = (s16) A - (s16) M - (1 - regs.SR.C);
     u8 V = ((A >> 7) != (M >> 7)) && ((signedResult >> 7) != (A >> 7));
