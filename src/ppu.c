@@ -4,7 +4,7 @@
 extern u8 *rom;
 extern ROM_Header romHeader;
 u8 patternTable[0x1000];
-u8 pixels[8][8][256]; // Has value 0, 1, 2, or 3
+u8 pixels[256][8][8]; // Has value 0, 1, 2, or 3
 
 void readPatternTable() {
     //memcpy(patternTable, rom + (romHeader.prgRomSize * 16 * 1024), 0x1000);
@@ -25,7 +25,7 @@ void readPatternTable() {
                 else if(bitplane1value && bitplane2Value)
                     pixelValue = 3;
                 
-                pixels[y][7 - x][tile] = pixelValue;
+                pixels[tile][y][7-x] = pixelValue;
             }
         }
     }
@@ -33,7 +33,7 @@ void readPatternTable() {
     for (int tile = 0; tile < 256; tile++) {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                printf("%x", pixels[y][x][tile]);
+                printf("%x", pixels[tile][y][x]);
             }
             printf("\n");
         }
