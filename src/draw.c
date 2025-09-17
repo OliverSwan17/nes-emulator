@@ -5,6 +5,7 @@
 
 extern Registers regs;
 extern Memory memory;
+extern u8 pixels[2][256][8][8];
 
 // Colors
 #undef COLOR_WHITE
@@ -31,6 +32,7 @@ static void drawRegisters(void);
 static void drawStatusBits(void);
 static void drawInstructionToExecute(Instruction instruction);
 static void drawProgram(u8 pcOffset);
+static void drawPatternTables(void);
 
 int initDraw(void) {
     SDL_Init(SDL_INIT_VIDEO);
@@ -78,6 +80,7 @@ void draw(Instruction instruction) {
     drawRegisters();
     drawStatusBits();
     drawInstructionToExecute(instruction);
+    drawPatternTables();
     presentScreen();
     
     SDL_Event e;
@@ -93,6 +96,56 @@ void draw(Instruction instruction) {
             }
         }
         SDL_Delay(16);
+    }
+}
+
+static void drawPatternTables(void) {
+    SDL_Color colors[4] = {
+        {0, 0, 0, 255},       // 0: Black
+        {85, 85, 85, 255},    // 1: Dark Gray
+        {170, 170, 170, 255}, // 2: Light Gray
+        {255, 255, 255, 255}  // 3: White
+    };
+    
+    int start_x = 50 * g_drawCtx.char_width;
+    int start_y = 15 * g_drawCtx.char_height;
+    int pixel_size = 2;
+    int table_spacing = 272;
+    
+    for (int table = 0; table < 2; table++) {
+        int table_start_x = start_x + (table * table_spacing);
+        
+        for (int tile = 0; tile < 256; tile++) {
+            int tile_x = tile % 16;
+            int tile_y = tile / 16;
+            
+            int screen_tile_x = table_start_x + (tile_x * 8 * pixel_size);
+            int screen_tile_y = start_y + (tile_y * 8 * pixel_size);
+            
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    u8 pixel_value = pixels[table][tile][y][x];
+                    SDL_Color color = colors[pixel_value];
+                    SDL_SetRenderDrawColor(g_drawCtx.renderer, color.r, color.g, color.b, color.a);
+                    SDL_Rect pixel_rect = {
+                        screen_tile_x + (x * pixel_size),
+                        screen_tile_y + (y * pixel_size),
+                        pixel_size,
+                        pixel_size
+                    };
+                    SDL_RenderFillRect(g_drawCtx.renderer, &pixel_rect);
+                }
+            }
+        }
+        
+        SDL_SetRenderDrawColor(g_drawCtx.renderer, 128, 128, 128, 255);
+        SDL_Rect border = {
+            table_start_x - 1,
+            start_y - 1,
+            (16 * 8 * pixel_size) + 2,
+            (16 * 8 * pixel_size) + 2
+        };
+        SDL_RenderDrawRect(g_drawCtx.renderer, &border);
     }
 }
 

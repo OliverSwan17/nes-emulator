@@ -8,8 +8,6 @@
 
 #define PROGRAM_OFFSET 2048
 
-
-
 typedef struct Registers {
     u8 A;  // Accumulator
     u8 X;  // Index
