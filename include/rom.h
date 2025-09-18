@@ -8,7 +8,7 @@
 typedef struct ROM_Header {
     uint8_t magic[4];    // "NES\x1A"
     uint8_t prgRomSize;  // PRG ROM size in 16KB units
-    uint8_t chrRomSize;  // CHR ROM size in 8KB units
+    uint8_t chrRomSize;  // CHR ROM size in 8KB units. Size of 0 means board uses CHR RAM
     uint8_t flags6;      // Mapper, mirroring, battery, trainer
     uint8_t flags7;      // Mapper, VS/Playchoice, NES 2.0
     uint8_t flags8;      // PRG-RAM size

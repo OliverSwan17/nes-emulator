@@ -1,8 +1,13 @@
 #include "6502.h"
 #include "instructions.h"
+#include "reg.h"
+#include "ppu.h"
+#include "rom.h"
 
 extern Registers regs;
 extern Memory memory;
+extern PPURegs ppuRegs;
+extern ROM_Header romHeader;
 extern InstructionMetaData imdLookup[256];
 
 // Mnemonic, Addressing Mode, Bytes, Cycles
@@ -198,7 +203,62 @@ void initInstructionMetaData() {
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
 
 void write(u16 addr, u8 value) {
-    memory.ram[addr] = (value);
+    if (addr < 0x2000)
+        memory.ram[addr] = value;
+    else if (addr < 0x4000)
+        addr &= 2007;
+        switch (addr)
+        {
+        case PPUCTRL:
+            break;
+        case PPUSTATUS:
+            break;
+        case OAMADDR:
+            break;
+        case OAMDATA:
+            break;
+        case PPUSCROLL:
+            break;
+        case PPUADDR:
+            if (!ppuRegs.w)
+                ppuRegs.t = (u16) ((value & 0x3F) << 8);
+            else {
+                ppuRegs.v = (u16) (ppuRegs.t | value);
+                ppuRegs.t = ppuRegs.v;
+            }
+            ppuRegs.w = !ppuRegs.w;
+            break;
+        case PPUDATA:
+            if (ppuRegs.v < 0x2000) {
+                if (romHeader.chrRomSize == 0) { // Write to pattern table
+                    extern u8 *rom;
+                    rom[romHeader.prgRomSize * 1024 * 16 + ppuRegs.v] = value;
+                } 
+            }
+            else if (ppuRegs.v < 0x3F00) { // Write to nametables
+                extern u8 vRam[0x800];
+                if ((romHeader.flags6 & 1) == 0) {
+                    // Horizontal mirroring
+                    vRam[(ppuRegs.v & 0x3FF) | (ppuRegs.v & 0x800) >> 1] = value;
+                } else {
+                    // Vertical mirroring
+                    vRam[ppuRegs.v & 0x7FF] = value;
+                }
+            } else {
+                extern u8 paletteRam[0x20];
+                // Write to Palette RAM
+                if ((ppuRegs.v & 3) == 0)
+                    paletteRam[ppuRegs.v & 0x0F] = value;
+                else
+                    paletteRam[ppuRegs.v & 0x1F] = value;
+            }
+            
+            ppuRegs.v += (u16) 1;
+            ppuRegs.v &= 0x3FFF;
+            break;
+        default:
+            break;
+        }
 }
 
 void executeInstruction(Instruction instruction) {

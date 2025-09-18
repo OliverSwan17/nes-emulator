@@ -3,8 +3,12 @@
 
 extern u8 *rom;
 extern ROM_Header romHeader;
+
 u8 patternTable[0x2000];
 u8 pixels[2][256][8][8]; // Has value 0, 1, 2, or 3
+PPURegs ppuRegs;
+u8 vRam[0x800];
+u8 paletteRam[0x20];
 
 void readPatternTable() {
     memcpy(patternTable, rom + (romHeader.prgRomSize * 16 * 1024), 0x1000);
