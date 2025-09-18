@@ -197,6 +197,10 @@ void initInstructionMetaData() {
     imdLookup[0x22] = (InstructionMetaData){"END", IMPLIED, 1, 0}; // Ends the program
 } // imdLookup[0x] = (InstructionMetaData){"", , , };
 
+void write(u16 addr, u8 value) {
+    memory.ram[addr] = (value);
+}
+
 void executeInstruction(Instruction instruction) {
     if (strcmp(instruction.mnemonic, "NOP") == 0)
         NOP();
@@ -501,19 +505,19 @@ void STA(Instruction instruction) {
     u8 Y = regs.Y;
 
     if (addrMode == ZEROPAGE)
-        WRITE_RAM(lowByte, A);
+        write(lowByte, A);
     else if (addrMode == ZEROPAGE_X)
-        WRITE_RAM(ZEROPAGE_X_ADDR(lowByte, X), A);
+        write(ZEROPAGE_X_ADDR(lowByte, X), A);
     else if (addrMode == ABSOLUTE)
-        WRITE_RAM(operand, A);
+        write(operand, A);
     else if (addrMode == ABSOLUTE_X)
-        WRITE_RAM(ABSOLUTE_X_ADDR(operand, X), A);
+        write(ABSOLUTE_X_ADDR(operand, X), A);
     else if (addrMode == ABSOLUTE_Y) 
-        WRITE_RAM(ABSOLUTE_Y_ADDR(operand, Y), A);
+        write(ABSOLUTE_Y_ADDR(operand, Y), A);
     else if (addrMode == X_INDIRECT)
-        WRITE_RAM(X_INDIRECT_ADDR(lowByte, X), A);
+        write(X_INDIRECT_ADDR(lowByte, X), A);
     else if (addrMode == INDIRECT_Y)
-        WRITE_RAM(INDIRECT_Y_ADDR(lowByte, Y), A);
+        write(INDIRECT_Y_ADDR(lowByte, Y), A);
 }
 
 void CPX(Instruction instruction) {
@@ -720,7 +724,7 @@ void ASL(Instruction instruction) {
     if (addrMode == ACCUMULATOR)
         regs.A = result;
     else
-        WRITE_RAM(effAddr, result);
+        write(effAddr, result);
 
     regs.SR.C = (value >> 7);
     UPDATE_Z_FLAG(result);
@@ -754,7 +758,7 @@ void LSR(Instruction instruction) {
     if (addrMode == ACCUMULATOR)
         regs.A = result;
     else
-        WRITE_RAM(effAddr, result);
+        write(effAddr, result);
 
     regs.SR.C = value & 0b1;
     UPDATE_Z_FLAG(result);
@@ -766,11 +770,11 @@ void STX(Instruction instruction) {
     u8 lowByte = instruction.operand.lowByte;
 
     if (addrMode == ZEROPAGE)
-        WRITE_RAM(lowByte, regs.X);
+        write(lowByte, regs.X);
     else if (addrMode == ZEROPAGE_Y)
-        WRITE_RAM(ZEROPAGE_Y_ADDR(lowByte, regs.Y), regs.X);
+        write(ZEROPAGE_Y_ADDR(lowByte, regs.Y), regs.X);
     else if (addrMode == ABSOLUTE)
-        WRITE_RAM(instruction.operand.bytes, regs.X);
+        write(instruction.operand.bytes, regs.X);
 }
 
 void STY(Instruction instruction) {
@@ -779,11 +783,11 @@ void STY(Instruction instruction) {
     u8 lowByte = instruction.operand.lowByte;
 
     if (addrMode == ZEROPAGE)
-        WRITE_RAM(lowByte, regs.Y);
+        write(lowByte, regs.Y);
     else if (addrMode == ZEROPAGE_X)
-        WRITE_RAM(ZEROPAGE_X_ADDR(lowByte, regs.X), regs.Y);
+        write(ZEROPAGE_X_ADDR(lowByte, regs.X), regs.Y);
     else if (addrMode == ABSOLUTE)
-        WRITE_RAM(operand, regs.Y);
+        write(operand, regs.Y);
 }
 
 void ROL(Instruction instruction) {
@@ -814,7 +818,7 @@ void ROL(Instruction instruction) {
     if (addrMode == ACCUMULATOR)
         regs.A = result;
     else
-        WRITE_RAM(effAddr, result);
+        write(effAddr, result);
 
     regs.SR.C = (value >> 7);
     UPDATE_Z_FLAG(result);
@@ -849,7 +853,7 @@ void ROR(Instruction instruction) {
     if (addrMode == ACCUMULATOR)
         regs.A = result;
     else
-        WRITE_RAM(effAddr, result);
+        write(effAddr, result);
 
     regs.SR.C = value & 0b1;
     UPDATE_Z_FLAG(result);
@@ -918,7 +922,7 @@ void BIT(Instruction instruction) {
 }
 
 void PHP() {
-    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 4) | (1 << 5));
+    write(0x100 + regs.SP, regs.SR.byte | (1 << 4) | (1 << 5));
     regs.SP--;
 }
 
@@ -976,11 +980,11 @@ void BVS(Instruction instruction) {
 }
 
 void BRK() {
-    WRITE_RAM(0x100 + regs.SP, ((regs.PC + 2) >> 8) & 0xFF);
+    write(0x100 + regs.SP, ((regs.PC + 2) >> 8) & 0xFF);
     regs.SP--;
-    WRITE_RAM(0x100 + regs.SP, (regs.PC + 2) & 0xFF);
+    write(0x100 + regs.SP, (regs.PC + 2) & 0xFF);
     regs.SP--;
-    WRITE_RAM(0x100 + regs.SP, regs.SR.byte | (1 << 5) | (1 << 4)); // Set unused bit (5) and break bit (4)
+    write(0x100 + regs.SP, regs.SR.byte | (1 << 5) | (1 << 4)); // Set unused bit (5) and break bit (4)
     regs.SP--;
     regs.SR.I = 1;
     regs.PC = READ_WORD_ABSOLUTE(0xFFFE);

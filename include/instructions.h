@@ -3,7 +3,6 @@
 
 #define READ_WORD_ABSOLUTE(operand) ((memory.ram[(operand) + 1] << 8) | memory.ram[(operand)])
 #define READ_RAM(addr) (memory.ram[(addr)])
-#define WRITE_RAM(addr, val) (memory.ram[(addr)] = (val))
 
 #define ZEROPAGE_X_ADDR(lowByte, X) (((lowByte) + (X)) & 0xFF)
 #define ZEROPAGE_Y_ADDR(lowByte, Y) (((lowByte) + (Y)) & 0xFF)
@@ -25,7 +24,7 @@
 
 
 
-
+void write(u16 addr, u8 value);
 void executeInstruction(Instruction);
 void Bitwise(Instruction);
 
